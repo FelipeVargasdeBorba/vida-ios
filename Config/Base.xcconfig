@@ -1,0 +1,2 @@
+// Configuração comum. O time de assinatura fica em Local.xcconfig (fora do git).
+#include? "Local.xcconfig"

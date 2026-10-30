@@ -1,0 +1,9 @@
+Vida.xcodeproj/
+DerivedData/
+build/
+.DS_Store
+xcuserdata/
+Config/Local.xcconfig
+*.xcuserstate
+.swiftpm/
+.build/
