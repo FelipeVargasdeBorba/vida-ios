@@ -1,62 +1,62 @@
 # Vida
 
 [![CI](https://github.com/FelipeVargasdeBorba/vida-ios/actions/workflows/ci.yml/badge.svg)](https://github.com/FelipeVargasdeBorba/vida-ios/actions/workflows/ci.yml)
-![Plataforma](https://img.shields.io/badge/iOS-17%2B-blue)
+![Platform](https://img.shields.io/badge/iOS-17%2B-blue)
 ![Swift](https://img.shields.io/badge/Swift-SwiftUI%20%2B%20SwiftData-orange)
-![Dependências](https://img.shields.io/badge/depend%C3%AAncias-0-brightgreen)
-![Licença](https://img.shields.io/badge/licen%C3%A7a-MIT-lightgrey)
+![Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
+![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
-App nativo de iPhone que organiza **finanças por período de pagamento**, **agenda** e **notas**, feito em SwiftUI e SwiftData, sem nenhuma dependência externa. A interface é em português.
+A native iPhone app for **pay-period budgeting**, **agenda** and **notes**, built with SwiftUI and SwiftData and **zero third-party dependencies**. The UI is in Portuguese.
 
-> [English version](README.en.md)
+> [Versão em português](README.pt-BR.md)
 
-## O problema
+## The problem
 
-Receber o salário e decidir, a cada mês, quanto vai para gastos, quanto fica numa conta de reserva e quanto vai para cada objetivo é um trabalho repetitivo e fácil de errar. O Vida faz essa divisão a partir do salário que a pessoa lança, mostra o que já foi pago e o que falta transferir, e carrega a sobra de um período para o seguinte.
+Every time a salary arrives you have to decide how much goes to day-to-day spending, how much to a savings account and how much to each goal. It is repetitive and easy to get wrong. Vida splits the salary you log, shows what has been paid and what is left to transfer, and carries leftovers from one period to the next.
 
-## Funcionalidades
+## Features
 
-**Finanças**
-- **O salário lançado define o plano.** A renda do período é a soma das entradas com origem "Salário"; outras entradas não mudam o plano.
-- **Divisão em três destinos**, com gráfico de rosca (Swift Charts): conta de gastos (Alimentação, Transporte, Lazer, Outro), **saves** (aluguel, fixos e reserva) e **uma conta para cada meta**.
-- **Cinco modelos de divisão** (de 50/30/20 a 50% de poupança) e ajuste da fatia "Outro".
-- **Checklist do período:** separar para saves, pagar cada conta fixa e transferir para cada meta, com o valor real transferido (o plano se adapta).
-- **Gastos fixos com vencimento e lembrete** no dia, que não toca se a conta já foi marcada como paga.
-- **Sobra acumulada:** o que sobra (ou falta) na conta de gastos passa para o período seguinte.
-- **Metas** com prazo e prioridade; a exigência de cada período é calculada e fica fixa durante ele.
-- **Adaptação automática** do orçamento quando o gasto passa do alvo, sem cortar casa, fixos nem a poupança exigida pelas metas.
-- **Histórico** com fotos imutáveis de cada período, transações e carteira de saves com saldo informado.
+**Finance**
+- **The logged salary drives the plan.** Period income is the sum of entries marked as "Salary"; other income does not change the plan.
+- **Three-way split** with a donut chart (Swift Charts): spending account, **savings** (rent, fixed bills, reserve) and **a separate account per goal**.
+- **Five budget presets** (50/30/20 up to 50% saved) and an adjustable "Other" slice.
+- **Per-period checklist:** move money to savings, pay each fixed bill, transfer to each goal. The actual amount transferred is what counts, and the plan adapts.
+- **Fixed bills with due dates and reminders** that stay silent once the bill is marked paid.
+- **Rolling leftover:** what is left (or overspent) in the spending account carries into the next period.
+- **Goals** with deadline and priority; each period's requirement is computed and stays fixed during the period.
+- **Automatic adaptation** when spending exceeds the target, never cutting housing, fixed bills or the savings required by goals.
+- **History** with immutable period snapshots, transactions, and a savings wallet with a user-entered balance.
 
-**Agenda:** obrigações e lembretes (únicos ou semanais), dias de trabalho e notificações locais.
+**Agenda:** one-off and weekly obligations and reminders, work days, local notifications.
 
-**Notas:** listas de tarefas simples.
+**Notes:** simple task lists.
 
-## Decisões técnicas
+## Technical decisions
 
-| Tema | Decisão |
+| Topic | Decision |
 |---|---|
-| UI | SwiftUI com `List` nativa, sem animações pesadas |
-| Dados | SwiftData, modelos prontos para CloudKit (campos com padrão, relações opcionais, enums como `String`) |
-| Dinheiro | Sempre `Int` em centavos; divisão pelo método do maior resto para a soma bater |
-| Lógica | Em `Vida/Domain`, Swift puro, com `Calendar` injetado e testes |
-| Desempenho | `@Query` com `#Predicate` filtrado pelo período; cálculo feito uma vez por tela |
-| Projeto | Gerado pelo XcodeGen a partir do `project.yml` |
-| Dependências | Nenhuma (nem SPM, nem CocoaPods) |
+| UI | SwiftUI with native `List`, no heavy animation |
+| Data | SwiftData, CloudKit-ready models (defaults on every field, optional relationships, enums stored as `String`) |
+| Money | Always `Int` cents; largest-remainder split so totals add up exactly |
+| Logic | In `Vida/Domain`, pure Swift, injected `Calendar`, unit-tested |
+| Performance | `@Query` with a period-filtered `#Predicate`; computed once per screen |
+| Project | Generated by XcodeGen from `project.yml` |
+| Dependencies | None (no SPM, no CocoaPods) |
 
-Mais detalhes em [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) e as regras de negócio em [docs/PRODUCT-RULES.md](docs/PRODUCT-RULES.md).
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the layers and the reasoning behind each decision, and [docs/PRODUCT-RULES.md](docs/PRODUCT-RULES.md) for the business rules. Portuguese versions are in [docs/pt](docs/pt).
 
-## Testes
+## Tests
 
-**75 testes unitários** cobrindo as regras de cálculo (períodos de pagamento, orçamento, metas, adaptação, divisão entre contas, vencimentos, sobra acumulada, notificações e agenda).
+**75 unit tests** covering the calculation rules: pay periods, budgeting, goals, adaptation, account split, due dates, rolling leftover, notifications and agenda.
 
 ```sh
 xcodegen generate
 xcodebuild -scheme Vida -destination 'platform=iOS Simulator,name=iPhone 17' build test
 ```
 
-## Como rodar
+## Getting started
 
-Requisitos: Mac com Xcode 26 ou mais novo e `brew install xcodegen`.
+Requires a Mac with Xcode 26+ and `brew install xcodegen`.
 
 ```sh
 git clone https://github.com/FelipeVargasdeBorba/vida-ios.git
@@ -65,37 +65,18 @@ xcodegen generate
 open Vida.xcodeproj
 ```
 
-No Xcode, escolha o esquema **Vida** e um simulador de iPhone, e aperte ⌘R.
+Pick the **Vida** scheme and an iPhone simulator, then press ⌘R. To run on a physical iPhone, copy `Config/Local.xcconfig.example` to `Config/Local.xcconfig` and set your Team ID. A free Apple ID works; the installed app expires after 7 days.
 
-**Instalar num iPhone de verdade** (conta gratuita da Apple):
-1. Copie `Config/Local.xcconfig.example` para `Config/Local.xcconfig` e coloque o seu Team ID.
-2. Rode `xcodegen generate`, conecte o iPhone e ative o Modo de Desenvolvedor.
-3. Escolha o iPhone como destino e aperte ⌘R. Depois, em Ajustes › Geral › VPN e Gerenciamento de Dispositivo, confie no seu perfil.
+## How it was built
 
-Com a conta gratuita o app instalado vale 7 dias; os dados continuam no aparelho ao reinstalar.
+A personal project. It is built by me with [Claude Code](https://claude.com/claude-code) as a programming assistant. Business rules, screens and product decisions come from my own needs; project rules are recorded in [CLAUDE.md](CLAUDE.md).
 
-## Estrutura
+## Roadmap
 
-```
-Vida/
-  App/        entrada, abas, roteador de notificações, dados iniciais
-  Domain/     regras de cálculo (Swift puro, testadas)
-  Models/     modelos do SwiftData
-  Services/   notificações locais
-  Features/   telas: Finance, Agenda, Notes, Shared
-VidaTests/    testes unitários
-docs/         arquitetura e regras de produto
-```
+- iCloud sync (the models already follow CloudKit rules; it needs a paid Apple Developer account).
+- Screenshots and TestFlight distribution.
+- English localization of the UI.
 
-## Como foi feito
-
-Projeto pessoal, desenvolvido por mim com o apoio do [Claude Code](https://claude.com/claude-code) como assistente de programação. As regras de negócio, as telas e as decisões de produto partiram das minhas necessidades; as regras do projeto estão registradas em [CLAUDE.md](CLAUDE.md).
-
-## Próximos passos
-
-- Sincronização por iCloud (os modelos já seguem as regras do CloudKit; falta a conta paga do Apple Developer).
-- Capturas de tela e distribuição pelo TestFlight.
-
-## Licença
+## License
 
 [MIT](LICENSE)

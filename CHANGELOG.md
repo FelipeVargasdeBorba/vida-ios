@@ -1,24 +1,24 @@
 # Changelog
 
-Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
+Based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). [Versão em português](docs/pt/CHANGELOG.md).
 
-## [Não lançado]
+## [Unreleased]
 
-### Adicionado
-- Divisão do salário em três destinos (conta de gastos, saves e uma conta por meta), com gráfico de rosca.
-- Checklist do período: separar para saves, pagar contas fixas e transferir para as metas.
-- Vencimento e lembrete nos gastos fixos; o aviso não toca se a conta já foi paga.
-- Sobra acumulada da conta de gastos entre períodos, com opção de zerar.
-- Valor real transferido para cada meta; o plano se adapta a ele.
-- Tema com cores suaves por categoria e fonte arredondada.
+### Added
+- Salary split into three destinations (spending account, savings, and one account per goal), with a donut chart.
+- Period checklist: move money to savings, pay fixed bills, transfer to goals.
+- Due dates and reminders on fixed bills; the alert stays silent once the bill is paid.
+- Rolling leftover of the spending account across periods, with a reset option.
+- Actual amount transferred to each goal; the plan adapts to it.
+- Soft per-category colour theme and rounded type.
 
-### Alterado
-- A renda do período passa a ser o salário lançado, e não mais um valor fixo nas configurações.
-- Tela de metas mostra só quanto transferir.
+### Changed
+- Period income is now the logged salary instead of a fixed value in settings.
+- The goals screen shows only how much to transfer.
 
 ## [1.0] - 2026-10-30
 
-### Adicionado
-- Finanças por período de pagamento (mensal ou semanal), modelos de divisão, metas, adaptação automática e histórico.
-- Agenda com obrigações, lembretes, dias de trabalho e notificações locais.
-- Notas em listas.
+### Added
+- Pay-period finances (monthly or weekly), split presets, goals, automatic adaptation and history.
+- Agenda with obligations, reminders, work days and local notifications.
+- Note lists.

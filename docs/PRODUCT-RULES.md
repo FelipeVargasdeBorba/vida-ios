@@ -1,42 +1,44 @@
-# Regras de produto
+# Product rules
 
-As decisões de negócio do app. Cada uma tem testes em `VidaTests`.
+> [Versão em português](pt/PRODUCT-RULES.md)
 
-## Período e renda
-- O período vai do dia de pagamento (inclusive) até o próximo (exclusive). Mensal ou semanal; no mensal, meses sem o dia configurado usam o último dia.
-- **Renda do período** = soma das entradas com origem **Salário** lançadas no período. "Outra entrada" não muda o plano.
-- Dias da semana seguem a ISO (1 = segunda … 7 = domingo); horários são minutos desde a meia-noite.
+The business decisions behind the app. Each one has tests in `VidaTests`.
 
-## Plano
-- Cinco modelos de divisão (Equilibrado 50/30/20, Mais lazer, Poupador 30%, Agressivo 40%, Extremo 50%).
-- "Outro" tira `outroPoints` (padrão 5) do percentual de Lazer, limitado ao próprio Lazer.
-- Gasto efetivo de uma categoria = `max(real, fixos)`: um fixo ainda não lançado já conta.
+## Period and income
+- A period runs from payday (inclusive) to the next payday (exclusive). Monthly or weekly; for monthly, months without the configured day use their last day.
+- **Period income** = sum of the entries logged in the period with source **Salary**. "Other income" does not change the plan.
+- Weekdays follow ISO (1 = Monday … 7 = Sunday); times of day are minutes since midnight.
 
-## Para onde vai o salário
-- **Conta de gastos:** as categorias escolhidas (padrão Alimentação, Transporte, Lazer, Outro).
-- **Saves:** o resto (Casa, Gastos fixos) mais a **Reserva**, que é o que sobra da poupança depois das metas.
-- **Conta de cada meta:** a parte da poupança destinada à meta, por prioridade, transferida direto, sem passar por saves.
-- A soma de todas as fatias é igual ao salário.
+## Plan
+- Five split presets (Balanced 50/30/20, More leisure, Saver 30%, Aggressive 40%, Extreme 50%).
+- "Other" takes `outroPoints` (default 5) from the Leisure percentage, capped at Leisure itself.
+- Effective spending of a category = `max(actual, fixed)`: a fixed bill not yet logged already counts.
 
-## Metas
-- Exigido no período = (alvo − guardado antes do período) ÷ períodos que começam antes do prazo. Fica fixo durante o período.
-- Ao marcar a meta, o valor transferido de fato é o que vale. Se for maior que o plano, a diferença sai da Reserva; se for menor, o que falta continua pendente. No período seguinte a exigência cai sozinha.
+## Where the salary goes
+- **Spending account:** the chosen categories (default Food, Transport, Leisure, Other).
+- **Savings:** the rest (Housing, Fixed bills) plus the **Reserve**, which is whatever is left of the savings share after goals.
+- **Each goal's own account:** the part of the savings share assigned to the goal, by priority, transferred directly and never passing through savings.
+- All slices add up to the salary.
 
-## Checklist do período
-- Separar para saves; cada gasto fixo (vencimento do período); cada meta com parte no plano.
-- Marcar uma conta como paga não lança gasto, porque os fixos já contam no plano.
-- Desfazer a transferência de uma meta apaga só os aportes criados pelo checklist.
+## Goals
+- Required this period = (target − saved before the period) ÷ periods that start before the deadline. It stays fixed during the period.
+- When a goal is checked, the amount actually transferred is what counts. If it is above plan, the difference comes out of the Reserve; if below, the rest stays pending. The next period's requirement drops on its own.
 
-## Gastos fixos
-- `dueDay` de 1 a 31 (0 = sem data), ajustado ao último dia do mês. No período mensal vale a ocorrência dentro do período; no semanal, a do mês em que o período começa.
-- O lembrete toca no dia, na hora configurada, e não toca se a conta já estiver paga.
+## Period checklist
+- Move money to savings; each fixed bill (due date of the period); each goal with a share in the plan.
+- Marking a bill as paid does not log an expense, because fixed bills already count in the plan.
+- Undoing a goal transfer deletes only the contributions created by the checklist.
 
-## Sobra da conta de gastos
-- Saldo acumulado de (parte do salário para gastos − usado) de todos os períodos anteriores, desde o primeiro salário lançado.
-- A sobra soma em Lazer (ou na primeira categoria da conta de gastos). A falta é descontada na ordem Lazer, Outro, Alimentação, Transporte, sem deixar nenhum alvo negativo.
-- "Zerar" recomeça a contagem no período atual e pede confirmação.
+## Fixed bills
+- `dueDay` from 1 to 31 (0 = no date), clamped to the last day of the month. For monthly periods the occurrence inside the period applies; for weekly periods, the one in the month the period starts.
+- The reminder fires on the day, at the configured time, and stays silent if the bill is already paid.
 
-## Adaptação automática
-- Corta categorias flexíveis, na ordem configurada, até `max(gasto, mínimo)`; depois usa só a poupança **acima** do piso exigido pelas metas.
-- Casa, Gastos fixos e o piso das metas nunca são cortados.
-- **Nunca muda plano ou meta sem confirmação** do usuário.
+## Spending-account leftover
+- Accumulated balance of (salary share for spending − used) over all earlier periods, from the first logged salary.
+- Leftover adds to Leisure (or the first category in the spending account). Overspend is deducted in the order Leisure, Other, Food, Transport, never leaving a target negative.
+- "Reset" restarts the count at the current period and asks for confirmation.
+
+## Automatic adaptation
+- Cuts flexible categories, in the configured order, down to `max(spent, minimum)`; then uses only the savings **above** the floor required by goals.
+- Housing, Fixed bills and the goals' floor are never cut.
+- **Never changes a plan or goal without the user's confirmation.**
