@@ -19,11 +19,11 @@ View (SwiftUI)  →  FinanceModel (ready-made structs)  →  Domain (pure Swift)
 
 | Folder | Contents |
 |---|---|
-| `Vida/App` | app entry, tabs, router (notification taps), seed data |
-| `Vida/Domain` | `PayPeriodCalculator`, `BudgetCalculator`, `GoalCalculator`, `PlanAdapter`, `AccountSplitCalculator`, `BillCalculator`, `CarryOverCalculator`, `NotificationPlanner`, `Money` |
-| `Vida/Models` | `FinanceSettings`, `FixedExpense`, `Transaction`, `Goal`, `GoalContribution`, `PeriodCheck`, `PeriodSnapshot`, agenda and notes |
-| `Vida/Services` | `NotificationService`: 14-day window, at most 60 pending alerts, rebuilt when the app opens and on every edit |
-| `Vida/Features` | Finance, Agenda and Notes screens, plus shared components (`Theme`, `Components`) |
+| `ios/Vida/App` | app entry, tabs, router (notification taps), seed data |
+| `ios/Vida/Domain` | `PayPeriodCalculator`, `BudgetCalculator`, `GoalCalculator`, `PlanAdapter`, `AccountSplitCalculator`, `BillCalculator`, `CarryOverCalculator`, `NotificationPlanner`, `Money` |
+| `ios/Vida/Models` | `FinanceSettings`, `FixedExpense`, `Transaction`, `Goal`, `GoalContribution`, `PeriodCheck`, `PeriodSnapshot`, agenda and notes |
+| `ios/Vida/Services` | `NotificationService`: 14-day window, at most 60 pending alerts, rebuilt when the app opens and on every edit |
+| `ios/Vida/Features` | Finance, Agenda and Notes screens, plus shared components (`Theme`, `Components`) |
 
 ## Decisions and reasoning
 
@@ -37,7 +37,7 @@ View (SwiftUI)  →  FinanceModel (ready-made structs)  →  Domain (pure Swift)
 
 **Local notifications with a sliding window.** iOS caps pending notifications at 64, so the app schedules only the next 14 days (at most 60) and rebuilds the window. Salary day and bills due have priority.
 
-**Generated project.** The `.xcodeproj` is disposable and not committed; `project.yml` is the source of truth. The signing team lives in `Config/Local.xcconfig`, which is git-ignored.
+**Generated project.** The `.xcodeproj` is disposable and not committed; `project.yml` is the source of truth. The signing team lives in `ios/Config/Local.xcconfig`, which is git-ignored.
 
 **No dependencies.** Less maintenance risk, and it shows command of the platform APIs (SwiftUI, SwiftData, Swift Charts, UserNotifications).
 
@@ -59,3 +59,19 @@ Tests live in `VidaTests` and use a fixed Gregorian UTC calendar (`TestSupport.s
 | **Total** | **75** | |
 
 CI (GitHub Actions) builds the project and runs the whole suite on a simulator for every push and pull request.
+
+## Web app (PWA)
+
+| Layer | Contents |
+|---|---|
+| `web/src/domain` | Pure TypeScript port of the Swift domain: pay periods, budget, goals, adapter, account split, bills, carry-over, agenda. Dates are integer days since 1970 (no time zones). Money is integer cents. |
+| `web/src/state.ts`, `store.ts` | Typed state, `localStorage` persistence (`vida.state.v1`), JSON export/import, `navigator.storage.persist()` |
+| `web/src/financeModel.ts` | Computes a screen's numbers once and hands plain structs to the views |
+| `web/src/ui` | Vanilla DOM views (`h()` helper), hash router, `<dialog>` sheets, SVG donut |
+| `web/public` | Manifest, hand-written service worker (precache list injected at build), icons |
+
+**Why no framework.** Zero runtime dependencies keeps the bundle near 22 kB gzipped and removes supply-chain risk; the UI is small enough for a tiny hyperscript helper.
+
+**Why a PWA.** A free Apple ID signs native builds for 7 days only. A PWA installed on the Home Screen has no expiry and needs no account. Trade-off: web apps cannot schedule local notifications on iOS, so reminders are exported as `.ics` calendar events with alerts.
+
+**Deployment.** `web.yml` tests, builds and publishes `web/dist` to GitHub Pages. Vite uses `base: './'` so it works under `/vida-ios/`.

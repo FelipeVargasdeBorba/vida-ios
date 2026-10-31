@@ -19,11 +19,11 @@ View (SwiftUI)  →  FinanceModel (structs prontas)  →  Domain (Swift puro)
 
 | Pasta | Conteúdo |
 |---|---|
-| `Vida/App` | entrada do app, abas, roteador (toque na notificação), dados iniciais |
-| `Vida/Domain` | `PayPeriodCalculator`, `BudgetCalculator`, `GoalCalculator`, `PlanAdapter`, `AccountSplitCalculator`, `BillCalculator`, `CarryOverCalculator`, `NotificationPlanner`, `Money` |
-| `Vida/Models` | `FinanceSettings`, `FixedExpense`, `Transaction`, `Goal`, `GoalContribution`, `PeriodCheck`, `PeriodSnapshot`, agenda e notas |
-| `Vida/Services` | `NotificationService`: janela de 14 dias, no máximo 60 avisos pendentes, refeita ao abrir o app e a cada edição |
-| `Vida/Features` | telas de Finance, Agenda, Notes e componentes compartilhados (`Theme`, `Components`) |
+| `ios/Vida/App` | entrada do app, abas, roteador (toque na notificação), dados iniciais |
+| `ios/Vida/Domain` | `PayPeriodCalculator`, `BudgetCalculator`, `GoalCalculator`, `PlanAdapter`, `AccountSplitCalculator`, `BillCalculator`, `CarryOverCalculator`, `NotificationPlanner`, `Money` |
+| `ios/Vida/Models` | `FinanceSettings`, `FixedExpense`, `Transaction`, `Goal`, `GoalContribution`, `PeriodCheck`, `PeriodSnapshot`, agenda e notas |
+| `ios/Vida/Services` | `NotificationService`: janela de 14 dias, no máximo 60 avisos pendentes, refeita ao abrir o app e a cada edição |
+| `ios/Vida/Features` | telas de Finance, Agenda, Notes e componentes compartilhados (`Theme`, `Components`) |
 
 ## Decisões e motivos
 
@@ -37,7 +37,7 @@ View (SwiftUI)  →  FinanceModel (structs prontas)  →  Domain (Swift puro)
 
 **Notificações locais com janela deslizante.** O iOS limita a 64 notificações pendentes, então o app agenda só os próximos 14 dias (máximo 60) e refaz a janela. Pagamento do salário e contas a pagar têm prioridade.
 
-**Projeto gerado.** O `.xcodeproj` é descartável e não vai para o git; a fonte da verdade é o `project.yml`. O time de assinatura fica em `Config/Local.xcconfig`, fora do git.
+**Projeto gerado.** O `.xcodeproj` é descartável e não vai para o git; a fonte da verdade é o `project.yml`. O time de assinatura fica em `ios/Config/Local.xcconfig`, fora do git.
 
 **Sem dependências.** Reduz risco de manutenção e mostra domínio das APIs da plataforma (SwiftUI, SwiftData, Swift Charts, UserNotifications).
 
@@ -57,3 +57,19 @@ Os testes ficam em `VidaTests` e usam um calendário gregoriano fixo em UTC (`Te
 | `GoalTransferTests` | 4 | valor transferido maior ou menor que o plano |
 | `AgendaTests` | 10 | ocorrências, notificações, janela e limite |
 | **Total** | **75** | |
+
+## App web (PWA)
+
+| Camada | Conteúdo |
+|---|---|
+| `web/src/domain` | Port em TypeScript puro do domínio Swift: períodos, orçamento, metas, adaptação, divisão entre contas, contas a pagar, sobra, agenda. Datas são dias inteiros desde 1970 (sem fuso). Dinheiro em centavos inteiros. |
+| `web/src/state.ts`, `store.ts` | Estado tipado, gravação em `localStorage` (`vida.state.v1`), exportar/importar JSON, `navigator.storage.persist()` |
+| `web/src/financeModel.ts` | Calcula os números de uma tela uma vez e entrega structs prontas às views |
+| `web/src/ui` | Views em DOM puro (helper `h()`), roteador por hash, folhas com `<dialog>`, rosca em SVG |
+| `web/public` | Manifesto, service worker escrito à mão (lista de cache injetada no build), ícones |
+
+**Por que sem framework.** Zero dependências em tempo de execução mantém o pacote perto de 22 kB comprimido e elimina risco de cadeia de suprimentos; a interface é pequena o bastante para um helper mínimo.
+
+**Por que PWA.** Um Apple ID gratuito assina builds nativos por só 7 dias. Um PWA instalado na Tela de Início não expira e não precisa de conta. Contrapartida: sites não agendam notificações locais no iOS, então os lembretes são exportados como eventos `.ics` com alerta.
+
+**Publicação.** `web.yml` testa, compila e publica `web/dist` no GitHub Pages. O Vite usa `base: './'` para funcionar em `/vida-ios/`.

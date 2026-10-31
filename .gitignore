@@ -3,7 +3,11 @@ DerivedData/
 build/
 .DS_Store
 xcuserdata/
-Config/Local.xcconfig
+ios/Config/Local.xcconfig
 *.xcuserstate
 .swiftpm/
 .build/
+node_modules/
+dist/
+.vite/
+coverage/

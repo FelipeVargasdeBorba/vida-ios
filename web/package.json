@@ -1,0 +1,21 @@
+{
+  "name": "vida-web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Vida — finanças por período de pagamento, agenda e notas, como PWA.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "jsdom": "^30.1.3",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
+  }
+}

@@ -1,12 +1,20 @@
 # Vida
 
-[![CI](https://github.com/FelipeVargasdeBorba/vida-ios/actions/workflows/ci.yml/badge.svg)](https://github.com/FelipeVargasdeBorba/vida-ios/actions/workflows/ci.yml)
-![Plataforma](https://img.shields.io/badge/iOS-17%2B-blue)
-![Swift](https://img.shields.io/badge/Swift-SwiftUI%20%2B%20SwiftData-orange)
+[![CI iOS](https://github.com/FelipeVargasdeBorba/vida-ios/actions/workflows/ios.yml/badge.svg)](https://github.com/FelipeVargasdeBorba/vida-ios/actions/workflows/ios.yml)
+[![CI Web](https://github.com/FelipeVargasdeBorba/vida-ios/actions/workflows/web.yml/badge.svg)](https://github.com/FelipeVargasdeBorba/vida-ios/actions/workflows/web.yml)
+![Plataformas](https://img.shields.io/badge/PWA-Tela%20de%20In%C3%ADcio%20do%20iPhone-blue)
+![Stack](https://img.shields.io/badge/stack-TypeScript%20%7C%20SwiftUI-orange)
 ![Dependências](https://img.shields.io/badge/depend%C3%AAncias-0-brightgreen)
 ![Licença](https://img.shields.io/badge/licen%C3%A7a-MIT-lightgrey)
 
-App nativo de iPhone que organiza **finanças por período de pagamento**, **agenda** e **notas**, feito em SwiftUI e SwiftData, sem nenhuma dependência externa. A interface é em português.
+**Finanças por período de pagamento**, **agenda** e **notas** para o celular, sem nenhuma dependência externa em tempo de execução. O mesmo produto existe em duas versões:
+
+| | Pasta | Stack | Instalação |
+|---|---|---|---|
+| **PWA (permanente, recomendado)** | [`web/`](web) | TypeScript, Vite, sem bibliotecas | Abra **https://felipevargasdeborba.github.io/vida-ios/** no Safari › Compartilhar › *Adicionar à Tela de Início* |
+| App nativo iOS | [`ios/`](ios) | SwiftUI, SwiftData, Swift Charts | Compile no Xcode (a assinatura gratuita vence em 7 dias) |
+
+A interface é em português.
 
 > [English version](README.md)
 
@@ -38,7 +46,7 @@ Receber o salário e decidir, a cada mês, quanto vai para gastos, quanto fica n
 | UI | SwiftUI com `List` nativa, sem animações pesadas |
 | Dados | SwiftData, modelos prontos para CloudKit (campos com padrão, relações opcionais, enums como `String`) |
 | Dinheiro | Sempre `Int` em centavos; divisão pelo método do maior resto para a soma bater |
-| Lógica | Em `Vida/Domain`, Swift puro, com `Calendar` injetado e testes |
+| Lógica | Camada de domínio pura (`ios/Vida/Domain`, `web/src/domain`), calendário injetado, testada e portada 1:1 entre Swift e TypeScript |
 | Desempenho | `@Query` com `#Predicate` filtrado pelo período; cálculo feito uma vez por tela |
 | Projeto | Gerado pelo XcodeGen a partir do `project.yml` |
 | Dependências | Nenhuma (nem SPM, nem CocoaPods) |
@@ -47,20 +55,36 @@ Mais detalhes em [docs/pt/ARCHITECTURE.md](docs/pt/ARCHITECTURE.md) e as regras 
 
 ## Testes
 
-**75 testes unitários** cobrindo as regras de cálculo (períodos de pagamento, orçamento, metas, adaptação, divisão entre contas, vencimentos, sobra acumulada, notificações e agenda).
+**75 testes em Swift** (iOS) e **77 testes em Vitest** (web) cobrem as regras de cálculo (períodos de pagamento, orçamento, metas, adaptação, divisão entre contas, vencimentos, sobra acumulada e agenda). O CI roda os dois a cada push.
 
 ```sh
-xcodegen generate
+cd ios && xcodegen generate
 xcodebuild -scheme Vida -destination 'platform=iOS Simulator,name=iPhone 17' build test
+
+cd web && npm ci && npm test
 ```
 
 ## Como rodar
+
+### PWA (permanente no iPhone)
+
+1. Abra **https://felipevargasdeborba.github.io/vida-ios/** no **Safari**.
+2. Toque em Compartilhar › **Adicionar à Tela de Início**.
+3. Abra o Vida pela Tela de Início. Funciona offline.
+
+Sem validade e sem conta de desenvolvedor. Os dados ficam no aparelho (`localStorage`); apps instalados na Tela de Início não sofrem a limpeza de 7 dias do Safari. Use *Finanças › Backup* para exportar um backup em JSON.
+
+Para desenvolver: `cd web && npm ci && npm run dev`.
+
+**Limitação do iOS:** sites não podem agendar notificações locais. Por isso contas e itens da agenda têm um botão **Calendário**, que exporta um evento recorrente `.ics` com alerta, e o checklist mostra o que vence em breve.
+
+### App nativo iOS
 
 Requisitos: Mac com Xcode 26 ou mais novo e `brew install xcodegen`.
 
 ```sh
 git clone https://github.com/FelipeVargasdeBorba/vida-ios.git
-cd vida-ios
+cd vida-ios/ios
 xcodegen generate
 open Vida.xcodeproj
 ```
@@ -68,7 +92,7 @@ open Vida.xcodeproj
 No Xcode, escolha o esquema **Vida** e um simulador de iPhone, e aperte ⌘R.
 
 **Instalar num iPhone de verdade** (conta gratuita da Apple):
-1. Copie `Config/Local.xcconfig.example` para `Config/Local.xcconfig` e coloque o seu Team ID.
+1. Copie `ios/Config/Local.xcconfig.example` para `ios/Config/Local.xcconfig` e coloque o seu Team ID.
 2. Rode `xcodegen generate`, conecte o iPhone e ative o Modo de Desenvolvedor.
 3. Escolha o iPhone como destino e aperte ⌘R. Depois, em Ajustes › Geral › VPN e Gerenciamento de Dispositivo, confie no seu perfil.
 
@@ -77,23 +101,25 @@ Com a conta gratuita o app instalado vale 7 dias; os dados continuam no aparelho
 ## Estrutura
 
 ```
-Vida/
-  App/        entrada, abas, roteador de notificações, dados iniciais
-  Domain/     regras de cálculo (Swift puro, testadas)
-  Models/     modelos do SwiftData
-  Services/   notificações locais
-  Features/   telas: Finance, Agenda, Notes, Shared
-VidaTests/    testes unitários
+ios/
+  Vida/       App, Domain, Models, Services, Features
+  VidaTests/  testes unitários
+web/
+  src/domain/ regras de cálculo (TypeScript puro, testadas)
+  src/ui/     telas e componentes (DOM, sem framework)
+  public/     manifesto, service worker, ícones
+  tests/      testes Vitest
 docs/         arquitetura e regras de produto
 ```
 
 ## Como foi feito
 
-Projeto pessoal, desenvolvido por mim com o apoio do [Claude Code](https://claude.com/claude-code) como assistente de programação. As regras de negócio, as telas e as decisões de produto partiram das minhas necessidades; as regras do projeto estão registradas em [CLAUDE.md](CLAUDE.md).
+Projeto pessoal, desenvolvido por mim com o apoio do [Claude Code](https://claude.com/claude-code) como assistente de programação. As regras de negócio, as telas e as decisões de produto partiram das minhas necessidades; as regras do projeto estão registradas em [ios/CLAUDE.md](ios/CLAUDE.md).
 
 ## Próximos passos
 
-- Sincronização por iCloud (os modelos já seguem as regras do CloudKit; falta a conta paga do Apple Developer).
+- Backup em nuvem criptografado e opcional para o PWA.
+- Sincronização por iCloud no app nativo (os modelos já seguem as regras do CloudKit; falta a conta paga do Apple Developer).
 - Capturas de tela e distribuição pelo TestFlight.
 
 ## Licença
