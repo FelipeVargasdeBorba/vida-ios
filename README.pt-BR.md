@@ -55,7 +55,7 @@ Mais detalhes em [docs/pt/ARCHITECTURE.md](docs/pt/ARCHITECTURE.md) e as regras 
 
 ## Testes
 
-**75 testes em Swift** (iOS) e **77 testes em Vitest** (web) cobrem as regras de cálculo (períodos de pagamento, orçamento, metas, adaptação, divisão entre contas, vencimentos, sobra acumulada e agenda). O CI roda os dois a cada push.
+**75 testes em Swift** (iOS) e **81 testes em Vitest** (web) cobrem as regras de cálculo (períodos de pagamento, orçamento, metas, adaptação, divisão entre contas, vencimentos, sobra acumulada e agenda). O CI roda os dois a cada push.
 
 ```sh
 cd ios && xcodegen generate
@@ -72,7 +72,7 @@ cd web && npm ci && npm test
 2. Toque em Compartilhar › **Adicionar à Tela de Início**.
 3. Abra o Vida pela Tela de Início. Funciona offline.
 
-Sem validade e sem conta de desenvolvedor. Os dados ficam no aparelho (`localStorage`); apps instalados na Tela de Início não sofrem a limpeza de 7 dias do Safari. Use *Finanças › Backup* para exportar um backup em JSON.
+Sem validade e sem conta de desenvolvedor. Os dados ficam no aparelho (`localStorage`); apps instalados na Tela de Início não sofrem a limpeza de 7 dias do Safari. Use *Finanças › Backup* para criar um backup protegido por senha e salvá-lo no iCloud Drive; o app avisa quando ele passa de 7 dias.
 
 Para desenvolver: `cd web && npm ci && npm run dev`.
 

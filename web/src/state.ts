@@ -27,6 +27,8 @@ export interface Settings {
   carryFromDay: Day | null;
   /** Hora dos lembretes exportados para o calendário, em minutos desde a meia-noite. */
   reminderMinutes: number;
+  /** Quando o último backup foi exportado (ms), ou null. */
+  lastBackupAt: number | null;
 }
 
 export interface FixedExpense {
@@ -159,7 +161,7 @@ export function defaultState(): AppState {
     settings: {
       currency: 'EUR', frequency: 'monthly', payDayOfMonth: 1, payWeekday: 5, preset: 'balanced', outroPoints: 5,
       adaptEnabled: false, flexibleOrder: [...DEFAULT_FLEXIBLE_ORDER], foodMinimum: 0, acceptedShortfallPeriodStart: null,
-      spendingAccount: [...DEFAULT_SPENDING_ACCOUNT], savesBalance: 0, savesBalanceUpdatedAt: null, carryFromDay: null, reminderMinutes: 540,
+      spendingAccount: [...DEFAULT_SPENDING_ACCOUNT], savesBalance: 0, savesBalanceUpdatedAt: null, carryFromDay: null, reminderMinutes: 540, lastBackupAt: null,
     },
     fixed: [], transactions: [], goals: [], contributions: [], checks: [], snapshots: [],
     workDays: [1, 2, 3, 4, 5, 6, 7].map((weekday) => ({ weekday, isOn: false, startMinutes: 540, endMinutes: 1080 })),

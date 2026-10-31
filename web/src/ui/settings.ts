@@ -4,7 +4,9 @@ import { type PayFrequency } from '../domain/payPeriod';
 import { WEEKDAY_NAMES, timeText } from '../domain/agenda';
 import { defaultState } from '../state';
 import { requestPersistence, store } from '../store';
-import { button, confirmDialog, download, moneyInput, section, segmented, select, toast, toggle, labelled, valueRow } from './components';
+import { button, confirmDialog, download, moneyInput, openSheet, section, segmented, select, toast, toggle, labelled, valueRow } from './components';
+import { decryptBackup, encryptBackup, isEncryptedBackup } from '../backup';
+import { fmtStamp } from './format';
 import { h } from './dom';
 import { type Ctx, type View } from './view';
 
@@ -64,7 +66,45 @@ export function setupView(_ctx: Ctx): View {
   }
 }
 
+function askPassword(title: string, confirm: boolean): Promise<string | null> {
+  return new Promise((resolve) => {
+    const pass = h('input', { type: 'password', class: 'field', placeholder: 'Senha', autocomplete: confirm ? 'new-password' : 'current-password' });
+    const again = h('input', { type: 'password', class: 'field', placeholder: 'Repita a senha', autocomplete: 'new-password' });
+    let answer: string | null = null;
+    openSheet(title, () => h('div', { class: 'form' }, h('div', { class: 'card' }, h('div', { class: 'row' }, pass), confirm ? h('div', { class: 'row' }, again) : null),
+      confirm ? h('p', { class: 'group-footer' }, 'Sem a senha o backup não abre, e eu não consigo recuperá-la. Anote em um lugar seguro.') : null), {
+      saveLabel: 'Continuar',
+      onSave: () => {
+        if (pass.value.length < 6) { toast('Use ao menos 6 caracteres'); return false; }
+        if (confirm && pass.value !== again.value) { toast('As senhas não são iguais'); return false; }
+        answer = pass.value;
+      },
+    });
+    document.addEventListener('close', () => resolve(answer), { capture: true, once: true });
+  });
+}
+
+async function exportEncrypted(): Promise<void> {
+  const password = await askPassword('Senha do backup', true);
+  if (!password) return;
+  const text = await encryptBackup(store.exportJson(), password);
+  const name = `vida-backup-${new Date().toISOString().slice(0, 10)}.vida`;
+  const file = new File([text], name, { type: 'application/octet-stream' });
+  let saved = false;
+  if (navigator.canShare?.({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: 'Backup do Vida' }); saved = true; } catch { /* cancelado */ }
+  } else {
+    download(name, text, 'application/octet-stream');
+    saved = true;
+  }
+  if (saved) {
+    store.update((s) => { s.settings.lastBackupAt = Date.now(); });
+    toast('Backup criado. Guarde no iCloud Drive.');
+  }
+}
+
 export function backupView(): View {
+  const s = store.state.settings;
   const el = h('div', { class: 'page' });
   const status = h('span', { class: 'num' }, '…');
   void (async () => {
@@ -73,28 +113,38 @@ export function backupView(): View {
     if (!persisted) persisted = await requestPersistence();
     status.textContent = persisted ? 'protegido' : 'padrão do navegador';
   })();
-  const file = h('input', { type: 'file', accept: 'application/json,.json', class: 'hidden', onchange: async () => {
+  const file = h('input', { type: 'file', accept: '.vida,.json,application/json,application/octet-stream', class: 'hidden', onchange: async () => {
     const f = file.files?.[0];
+    file.value = '';
     if (!f) return;
     try {
-      const data: unknown = JSON.parse(await f.text());
-      if (await confirmDialog('Substituir os dados atuais?', 'Tudo que está neste aparelho será trocado pelo conteúdo do arquivo.', 'Importar', true)) {
-        store.replace(data);
-        toast('Dados importados');
+      let parsed: unknown = JSON.parse(await f.text());
+      if (isEncryptedBackup(parsed)) {
+        const password = await askPassword('Senha do backup', false);
+        if (!password) return;
+        const plain = await decryptBackup(parsed, password);
+        if (plain === null) { toast('Senha errada ou arquivo danificado'); return; }
+        parsed = JSON.parse(plain);
+      }
+      if (await confirmDialog('Substituir os dados atuais?', 'Tudo que está neste aparelho será trocado pelo conteúdo do arquivo.', 'Restaurar', true)) {
+        store.replace(parsed);
+        toast('Dados restaurados');
       }
     } catch { toast('Arquivo inválido'); }
-    file.value = '';
   } });
+  const last = s.lastBackupAt === null ? 'nunca' : fmtStamp(s.lastBackupAt);
   el.append(
-    section(null, [h('div', { class: 'row value-row' }, h('span', { class: 'row-title' }, 'Proteção dos dados'), status)],
-      'Os dados ficam só neste aparelho. Instalado na Tela de Início, o iPhone não apaga os dados. Mesmo assim, exporte um backup de vez em quando.'),
     section(null, [
-      h('div', { class: 'row' }, button('Exportar backup (.json)', () => { download(`vida-backup-${new Date().toISOString().slice(0, 10)}.json`, store.exportJson(), 'application/json'); }, 'primary')),
-      h('div', { class: 'row' }, button('Importar backup', () => file.click())),
+      h('div', { class: 'row value-row' }, h('span', { class: 'row-title' }, 'Último backup'), h('span', { class: `num ${s.lastBackupAt === null ? 'bad' : ''}` }, last)),
+      h('div', { class: 'row value-row' }, h('span', { class: 'row-title' }, 'Proteção no aparelho'), status),
+    ], 'Os dados ficam neste aparelho. Se perder o celular, só o backup salva tudo.'),
+    section(null, [
+      h('div', { class: 'row' }, button('Criar backup protegido', () => void exportEncrypted(), 'primary')),
+      h('div', { class: 'row' }, button('Restaurar de um backup', () => file.click())),
       file,
-    ]),
+    ], 'No menu que abrir, escolha "Salvar em Arquivos" e depois iCloud Drive. O arquivo é cifrado com a sua senha (AES-256). Para trocar de celular, instale o app e restaure.'),
     section(null, [h('div', { class: 'row' }, button('Apagar todos os dados', async () => {
-      if (await confirmDialog('Apagar tudo?', 'Isso não pode ser desfeito. Exporte um backup antes.', 'Apagar tudo', true)) { store.replace(defaultState()); toast('Dados apagados'); }
+      if (await confirmDialog('Apagar tudo?', 'Isso não pode ser desfeito. Crie um backup antes.', 'Apagar tudo', true)) { store.replace(defaultState()); toast('Dados apagados'); }
     }, 'danger'))]),
   );
   return { title: 'Backup', el, back: true };

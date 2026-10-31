@@ -55,7 +55,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the layers and the reasonin
 
 ## Tests
 
-**75 Swift tests** (iOS) and **77 Vitest tests** (web) cover the calculation rules: pay periods, budgeting, goals, adaptation, account split, due dates, rolling leftover and agenda. CI runs both on every push.
+**75 Swift tests** (iOS) and **81 Vitest tests** (web) cover the calculation rules: pay periods, budgeting, goals, adaptation, account split, due dates, rolling leftover and agenda. CI runs both on every push.
 
 ```sh
 cd ios && xcodegen generate
@@ -72,7 +72,7 @@ cd web && npm ci && npm test
 2. Tap Share › **Add to Home Screen**.
 3. Open Vida from the Home Screen. It works offline.
 
-No expiry, no Apple Developer account. Data stays on the device (`localStorage`); installed Home Screen apps are exempt from Safari's 7-day storage cleanup. Use *Finanças › Backup* to export a JSON backup.
+No expiry, no Apple Developer account. Data stays on the device (`localStorage`); installed Home Screen apps are exempt from Safari's 7-day storage cleanup. Use *Finanças › Backup* to create a password-protected backup and save it to iCloud Drive; the app nudges you when it is older than 7 days.
 
 To develop: `cd web && npm ci && npm run dev`.
 

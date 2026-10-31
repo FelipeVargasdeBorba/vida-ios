@@ -3,7 +3,8 @@ import { type BillState } from '../domain/bills';
 import {
   CATEGORY_ICON, CATEGORY_TITLE, type BudgetLine, type Category, SPENDING, TRANSACTION_TITLE, effective, fixedOver, isOver, progress, remaining,
 } from '../domain/budget';
-import { GOAL_NOTE, deleteGoal, resetCarry, saveSnapshot, setSavesBalance, toggleBill, toggleTransfer, undoGoalTransfer } from '../actions';
+import { backupIsStale } from '../backup';
+import { GOAL_NOTE, hasData, deleteGoal, resetCarry, saveSnapshot, setSavesBalance, toggleBill, toggleTransfer, undoGoalTransfer } from '../actions';
 import { type FinanceModel, type GoalRow, currentPeriod, makeFinanceModel, scheduleOf } from '../financeModel';
 import { moreAggressive, extendedDeadline } from '../domain/goals';
 import { type PayPeriod, nextPeriod, periodContains, previousPeriod } from '../domain/payPeriod';
@@ -19,6 +20,15 @@ import { type Ctx, type View, hrefTo } from './view';
 
 const FINANCE = 'finance';
 const accountIcon: Record<BankAccount, string> = { spending: '💳', saves: '🌿', goal: '🎯' };
+
+function backupBanner(): HTMLElement {
+  const never = store.state.settings.lastBackupAt === null;
+  return h('section', { class: 'group' }, h('a', { class: 'card banner', href: hrefTo(FINANCE, 'backup') },
+    h('span', { class: 'banner-icon', 'aria-hidden': 'true' }, '☁️'),
+    h('span', { class: 'grow' }, h('span', { class: 'row-title block' }, never ? 'Faça seu primeiro backup' : 'Backup desatualizado'),
+      h('span', { class: 'caption block' }, 'Perdeu o celular, perdeu tudo. Leva 10 segundos.')),
+    h('span', { class: 'chev' }, '›')));
+}
 
 function checkCircle(done: boolean, color: string): HTMLElement {
   const el = h('span', { class: `check${done ? ' done' : ''}`, 'aria-hidden': 'true' }, done ? '✓' : '');
@@ -59,6 +69,7 @@ export function dashboard(ctx: Ctx): View {
   if (m.income > 0) el.append(hero(m));
   else el.append(salaryPrompt(m, ctx));
 
+  if (backupIsStale(s.settings.lastBackupAt, hasData(s), Date.now())) put(el, backupBanner());
   put(el, checklist(m));
 
   if (m.income > 0) {
