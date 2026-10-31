@@ -4,9 +4,10 @@ import { requestPersistence, store } from './store';
 import { adaptationView, dashboard, fixedView, goalDetailView, goalsView, historyDetailView, historyView, transactionsView } from './ui/finance';
 import { agendaAllView, agendaView, workView } from './ui/agenda';
 import { noteListView, notesView } from './ui/notes';
-import { backupView, setupView } from './ui/settings';
+import { accountView, backupView, setupView } from './ui/settings';
 import { clear, h } from './ui/dom';
-import { toast } from './ui/components';
+import { confirmDialog, toast } from './ui/components';
+import { sync } from './sync';
 import { type Ctx, type View } from './ui/view';
 
 const TABS = [
@@ -33,6 +34,7 @@ function route(ctx: Ctx, tab: string): View {
     case 'adaptation': return adaptationView(ctx);
     case 'setup': return setupView(ctx);
     case 'backup': return backupView();
+    case 'account': return accountView();
     default: return dashboard(ctx);
   }
 }
@@ -84,7 +86,15 @@ document.addEventListener('visibilitychange', () => {
   if (t !== today) { today = t; render(); }
 });
 
+sync.subscribe(schedule);
+sync.onConflict = async () => {
+  if (await confirmDialog('Usar os dados da nuvem?', 'Este aparelho e a sua conta têm dados diferentes. Usar a nuvem substitui o que está aqui.', 'Usar a nuvem', true)) return true;
+  if (await confirmDialog('Enviar os dados deste aparelho?', 'Isso substitui o que está salvo na sua conta.', 'Enviar deste aparelho', true)) return false;
+  return null;
+};
+
 render();
+sync.start();
 void requestPersistence();
 
 if ('serviceWorker' in navigator && import.meta.env.PROD) {

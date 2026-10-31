@@ -5,7 +5,8 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 ## [Não lançado]
 
 ### Adicionado
-- **App web (PWA)** em `web/`: port completo de finanças, agenda e notas; instalável na Tela de Início do iPhone sem validade, offline via service worker, backup cifrado (AES-256, salvo no iCloud Drive pelo menu Compartilhar), exportação `.ics` para contas e agenda. 81 testes Vitest; publicado no GitHub Pages.
+- Sincronização por conta no PWA: entre em qualquer celular e os dados acompanham. Cifra ponta a ponta (AES-256-GCM, chave da senha), API REST do Supabase sem biblioteca, sem sobrescrever em conflito. Veja [docs/pt/SYNC.md](SYNC.md).
+- **App web (PWA)** em `web/`: port completo de finanças, agenda e notas; instalável na Tela de Início do iPhone sem validade, offline via service worker, backup cifrado (AES-256, salvo no iCloud Drive pelo menu Compartilhar), exportação `.ics` para contas e agenda. 88 testes Vitest; publicado no GitHub Pages.
 - Divisão do salário em três destinos (conta de gastos, saves e uma conta por meta), com gráfico de rosca.
 - Checklist do período: separar para saves, pagar contas fixas e transferir para as metas.
 - Vencimento e lembrete nos gastos fixos; o aviso não toca se a conta já foi paga.

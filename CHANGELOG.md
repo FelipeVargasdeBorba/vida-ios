@@ -5,7 +5,8 @@ Based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). [Versão em p
 ## [Unreleased]
 
 ### Added
-- **Progressive Web App** in `web/`: full port of finance, agenda and notes; installable on the iPhone Home Screen with no expiry, offline via service worker, encrypted backup (AES-256, saved to iCloud Drive via the share sheet), `.ics` calendar export for bills and agenda items. 81 Vitest tests; deployed to GitHub Pages.
+- PWA account sync: sign in on any phone and the data follows. End-to-end encrypted (AES-256-GCM, key from the password), Supabase REST with no client library, conflict-safe. See [docs/SYNC.md](docs/SYNC.md).
+- **Progressive Web App** in `web/`: full port of finance, agenda and notes; installable on the iPhone Home Screen with no expiry, offline via service worker, encrypted backup (AES-256, saved to iCloud Drive via the share sheet), `.ics` calendar export for bills and agenda items. 88 Vitest tests; deployed to GitHub Pages.
 - Salary split into three destinations (spending account, savings, and one account per goal), with a donut chart.
 - Period checklist: move money to savings, pay fixed bills, transfer to goals.
 - Due dates and reminders on fixed bills; the alert stays silent once the bill is paid.

@@ -169,3 +169,4 @@ dialog.alert { width: min(320px, calc(100vw - 48px)); border-radius: 20px; paddi
 
 .banner { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: color-mix(in srgb, var(--warn) 14%, var(--card)); }
 .banner-icon { font-size: 22px; }
+.field.wide { width: 100%; text-align: left; }

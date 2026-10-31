@@ -4,6 +4,7 @@ import {
   CATEGORY_ICON, CATEGORY_TITLE, type BudgetLine, type Category, SPENDING, TRANSACTION_TITLE, effective, fixedOver, isOver, progress, remaining,
 } from '../domain/budget';
 import { backupIsStale } from '../backup';
+import { sync, syncConfigured } from '../sync';
 import { GOAL_NOTE, hasData, deleteGoal, resetCarry, saveSnapshot, setSavesBalance, toggleBill, toggleTransfer, undoGoalTransfer } from '../actions';
 import { type FinanceModel, type GoalRow, currentPeriod, makeFinanceModel, scheduleOf } from '../financeModel';
 import { moreAggressive, extendedDeadline } from '../domain/goals';
@@ -21,12 +22,12 @@ import { type Ctx, type View, hrefTo } from './view';
 const FINANCE = 'finance';
 const accountIcon: Record<BankAccount, string> = { spending: '💳', saves: '🌿', goal: '🎯' };
 
-function backupBanner(): HTMLElement {
+function backupBanner(cloud: boolean): HTMLElement {
   const never = store.state.settings.lastBackupAt === null;
-  return h('section', { class: 'group' }, h('a', { class: 'card banner', href: hrefTo(FINANCE, 'backup') },
+  return h('section', { class: 'group' }, h('a', { class: 'card banner', href: hrefTo(FINANCE, cloud ? 'account' : 'backup') },
     h('span', { class: 'banner-icon', 'aria-hidden': 'true' }, '☁️'),
-    h('span', { class: 'grow' }, h('span', { class: 'row-title block' }, never ? 'Faça seu primeiro backup' : 'Backup desatualizado'),
-      h('span', { class: 'caption block' }, 'Perdeu o celular, perdeu tudo. Leva 10 segundos.')),
+    h('span', { class: 'grow' }, h('span', { class: 'row-title block' }, cloud ? 'Salve na sua conta' : never ? 'Faça seu primeiro backup' : 'Backup desatualizado'),
+      h('span', { class: 'caption block' }, cloud ? 'Entre para guardar tudo na nuvem e abrir em qualquer celular.' : 'Perdeu o celular, perdeu tudo. Leva 10 segundos.')),
     h('span', { class: 'chev' }, '›')));
 }
 
@@ -69,7 +70,9 @@ export function dashboard(ctx: Ctx): View {
   if (m.income > 0) el.append(hero(m));
   else el.append(salaryPrompt(m, ctx));
 
-  if (backupIsStale(s.settings.lastBackupAt, hasData(s), Date.now())) put(el, backupBanner());
+  if (syncConfigured) {
+    if (!sync.signedIn && hasData(s)) put(el, backupBanner(true));
+  } else if (backupIsStale(s.settings.lastBackupAt, hasData(s), Date.now())) put(el, backupBanner(false));
   put(el, checklist(m));
 
   if (m.income > 0) {
@@ -103,13 +106,14 @@ export function dashboard(ctx: Ctx): View {
     if (m.adaptation) el.append(adaptationCard(m));
   }
 
-  const links: Node[] = [
+  const links: Child[] = [
     linkRow('🧾', 'Transações', hrefTo(FINANCE, 'transactions')),
     linkRow('📌', 'Gastos fixos', hrefTo(FINANCE, 'fixed')),
     linkRow('🎯', 'Metas', hrefTo(FINANCE, 'goals')),
     linkRow('🕘', 'Histórico', hrefTo(FINANCE, 'history')),
     linkRow('⚙️', 'Configurações', hrefTo(FINANCE, 'setup')),
-    linkRow('💾', 'Backup dos dados', hrefTo(FINANCE, 'backup')),
+    syncConfigured ? linkRow('☁️', 'Conta e nuvem', hrefTo(FINANCE, 'account'), sync.signedIn ? 'conectada' : undefined) : null,
+    linkRow('💾', 'Backup protegido', hrefTo(FINANCE, 'backup')),
   ];
   el.append(section(null, links));
   if (m.income > 0) {

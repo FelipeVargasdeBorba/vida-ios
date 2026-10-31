@@ -7,6 +7,7 @@ import { requestPersistence, store } from '../store';
 import { button, confirmDialog, download, moneyInput, openSheet, section, segmented, select, toast, toggle, labelled, valueRow } from './components';
 import { decryptBackup, encryptBackup, isEncryptedBackup } from '../backup';
 import { fmtStamp } from './format';
+import { sync, syncConfigured } from '../sync';
 import { h } from './dom';
 import { type Ctx, type View } from './view';
 
@@ -148,4 +149,55 @@ export function backupView(): View {
     }, 'danger'))]),
   );
   return { title: 'Backup', el, back: true };
+}
+
+// ── Conta e sincronização ────────────────────────────────────────────────────
+
+const STATUS_TEXT: Record<string, string> = { off: 'desligada', idle: 'em dia', syncing: 'sincronizando…', offline: 'sem conexão', error: 'com problema' };
+
+export function accountView(): View {
+  const el = h('div', { class: 'page' });
+  const rerender = () => window.dispatchEvent(new Event('vida:rerender'));
+  if (!syncConfigured) {
+    el.append(section(null, [h('div', { class: 'row muted' }, 'A sincronização ainda não foi configurada neste app. Enquanto isso, use o backup protegido.')]),
+      section(null, [h('a', { class: 'row link-row', href: '#/finance/backup' }, h('span', { class: 'grow row-title' }, 'Backup protegido'), h('span', { class: 'chev' }, '›'))]));
+    return { title: 'Conta', el, back: true };
+  }
+  if (sync.signedIn) {
+    el.append(
+      section(null, [
+        h('div', { class: 'row value-row' }, h('span', { class: 'row-title' }, 'Conta'), h('span', { class: 'num' }, sync.email ?? '')),
+        h('div', { class: 'row value-row' }, h('span', { class: 'row-title' }, 'Sincronização'), h('span', { class: `num ${sync.status === 'error' ? 'bad' : ''}` }, STATUS_TEXT[sync.status] ?? '')),
+        h('div', { class: 'row value-row' }, h('span', { class: 'row-title' }, 'Última vez'), h('span', { class: 'num' }, sync.lastSyncAt === null ? 'nunca' : fmtStamp(sync.lastSyncAt))),
+        sync.message ? h('p', { class: 'row caption bad' }, sync.message) : null,
+      ], 'Tudo que você muda é cifrado neste aparelho e enviado sozinho. Em outro celular, entre com o mesmo e-mail e senha.'),
+      section(null, [
+        h('div', { class: 'row' }, button('Sincronizar agora', () => void sync.sync().then(rerender), 'primary')),
+        h('div', { class: 'row' }, button('Sair desta conta', async () => {
+          if (await confirmDialog('Sair da conta?', 'Os dados continuam neste aparelho, mas deixam de ser enviados.', 'Sair')) { sync.signOut(); rerender(); }
+        })),
+      ], 'Se esquecer a senha, os dados da nuvem não podem ser recuperados, porque só ela abre o cofre. Por isso o backup protegido continua disponível em Backup.'),
+    );
+    return { title: 'Conta', el, back: true };
+  }
+  const email = h('input', { type: 'email', class: 'field wide', placeholder: 'E-mail', autocomplete: 'email', autocapitalize: 'none' });
+  const pass = h('input', { type: 'password', class: 'field wide', placeholder: 'Senha (8+ caracteres)', autocomplete: 'current-password' });
+  const run = async (create: boolean) => {
+    if (!email.value.includes('@') || pass.value.length < 8) { toast('Informe o e-mail e uma senha com 8+ caracteres'); return; }
+    try {
+      if (create) {
+        if (await sync.signUp(email.value.trim(), pass.value) === 'confirm') { toast('Conta criada. Confirme o e-mail e depois toque em Entrar.'); return; }
+      } else await sync.signIn(email.value.trim(), pass.value);
+      toast('Conta conectada');
+    } catch (e) { toast(e instanceof Error ? e.message : 'Algo deu errado'); }
+    rerender();
+  };
+  el.append(
+    section(null, [h('div', { class: 'row' }, email), h('div', { class: 'row' }, pass)], 'Seus dados são cifrados com a sua senha antes de sair do celular. Nem o servidor consegue lê-los.'),
+    section(null, [
+      h('div', { class: 'row' }, button('Entrar', () => void run(false), 'primary')),
+      h('div', { class: 'row' }, button('Criar conta', () => void run(true))),
+    ], 'Ao entrar num aparelho com dados e a conta já ter dados na nuvem, o app pergunta qual manter.'),
+  );
+  return { title: 'Conta', el, back: true };
 }

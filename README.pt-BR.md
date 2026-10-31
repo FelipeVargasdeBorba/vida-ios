@@ -51,11 +51,13 @@ Receber o salário e decidir, a cada mês, quanto vai para gastos, quanto fica n
 | Projeto | Gerado pelo XcodeGen a partir do `project.yml` |
 | Dependências | Nenhuma (nem SPM, nem CocoaPods) |
 
+A sincronização por conta está em [docs/pt/SYNC.md](docs/pt/SYNC.md).
+
 Mais detalhes em [docs/pt/ARCHITECTURE.md](docs/pt/ARCHITECTURE.md) e as regras de negócio em [docs/pt/PRODUCT-RULES.md](docs/pt/PRODUCT-RULES.md). As versões em inglês estão em [docs](docs).
 
 ## Testes
 
-**75 testes em Swift** (iOS) e **81 testes em Vitest** (web) cobrem as regras de cálculo (períodos de pagamento, orçamento, metas, adaptação, divisão entre contas, vencimentos, sobra acumulada e agenda). O CI roda os dois a cada push.
+**75 testes em Swift** (iOS) e **88 testes em Vitest** (web) cobrem as regras de cálculo (períodos de pagamento, orçamento, metas, adaptação, divisão entre contas, vencimentos, sobra acumulada e agenda). O CI roda os dois a cada push.
 
 ```sh
 cd ios && xcodegen generate
