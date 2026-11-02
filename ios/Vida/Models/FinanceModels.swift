@@ -12,7 +12,7 @@ final class FinanceSettings {
     /// ISO: 1 = segunda … 7 = domingo.
     var payWeekday: Int = 5
     var presetRaw: String = BudgetPreset.balanced.rawValue
-    /// Pontos percentuais tirados do Lazer para "Outro".
+    /// Sem uso desde que Lazer e Outro viraram uma categoria; fica no modelo para não perder dados.
     var outroPoints: Int = 5
     var paydayReminderOn: Bool = true
     var reminderMinutes: Int = 540
@@ -54,7 +54,7 @@ final class FinanceSettings {
 
     var spendingAccount: Set<BudgetCategory> {
         get {
-            Set(spendingAccountRaw.split(separator: ",").compactMap { BudgetCategory(rawValue: String($0)) })
+            Set(spendingAccountRaw.split(separator: ",").compactMap { BudgetCategory.stored(String($0)) })
                 .intersection(BudgetCategory.spending)
         }
         set { spendingAccountRaw = BudgetCategory.raw(from: BudgetCategory.spending.filter(newValue.contains)) }
@@ -64,7 +64,7 @@ final class FinanceSettings {
         PaySchedule(frequency: frequency, dayOfMonth: payDayOfMonth, weekday: payWeekday)
     }
 
-    var percents: [BudgetCategory: Int] { preset.percents(outroPoints: outroPoints) }
+    var percents: [BudgetCategory: Int] { preset.percents }
 }
 
 @Model
@@ -87,7 +87,7 @@ final class FixedExpense {
     }
 
     var category: BudgetCategory {
-        get { BudgetCategory(rawValue: categoryRaw) ?? .outro }
+        get { BudgetCategory.stored(categoryRaw) ?? .outro }
         set { categoryRaw = newValue.rawValue }
     }
 }
@@ -123,13 +123,13 @@ final class PeriodCheck {
 enum TransactionKind: String, CaseIterable, Identifiable {
     case expense, income
     var id: String { rawValue }
-    var title: String { self == .expense ? "Gasto" : "Entrada" }
+    var title: String { self == .expense ? "Expense" : "Income" }
 }
 
 enum IncomeSource: String, CaseIterable, Identifiable {
     case salary, other
     var id: String { rawValue }
-    var title: String { self == .salary ? "Salário" : "Outra entrada" }
+    var title: String { self == .salary ? "Salary" : "Other income" }
 }
 
 @Model
@@ -158,7 +158,7 @@ final class Transaction {
     }
 
     var category: BudgetCategory {
-        get { BudgetCategory(rawValue: categoryRaw) ?? .outro }
+        get { BudgetCategory.stored(categoryRaw) ?? .outro }
         set { categoryRaw = newValue.rawValue }
     }
 
@@ -231,7 +231,7 @@ final class PeriodSnapshot {
     var preset: BudgetPreset { BudgetPreset(rawValue: presetRaw) ?? .balanced }
     var frequency: PayFrequency { PayFrequency(rawValue: frequencyRaw) ?? .monthly }
 
-    var payload: SnapshotPayload? { try? JSONDecoder().decode(SnapshotPayload.self, from: payloadData) }
+    var payload: SnapshotPayload? { (try? JSONDecoder().decode(SnapshotPayload.self, from: payloadData))?.mergingLegacyLines() }
 }
 
 struct SnapshotPayload: Codable, Hashable {
@@ -252,7 +252,6 @@ struct SnapshotPayload: Codable, Hashable {
         var deadline: Date
     }
 
-    var outroPoints: Int
     var totalFixed: Int
     var free: Int
     var totalSpent: Int
@@ -263,4 +262,21 @@ struct SnapshotPayload: Codable, Hashable {
     var shortfall: Int?
     var dailyAllowance: Int?
     var shortfallAccepted: Bool
+}
+
+extension SnapshotPayload {
+    /// Fotos antigas têm linhas separadas de Lazer e Outro; aqui elas viram uma só.
+    func mergingLegacyLines() -> SnapshotPayload {
+        var copy = self
+        var merged: [Line] = []
+        for line in lines {
+            guard let i = merged.firstIndex(where: { $0.category == line.category }) else { merged.append(line); continue }
+            merged[i].adjusted = (merged[i].adjusted == nil && line.adjusted == nil) ? nil : (merged[i].adjusted ?? merged[i].target) + (line.adjusted ?? line.target)
+            merged[i].target += line.target
+            merged[i].fixed += line.fixed
+            merged[i].spent += line.spent
+        }
+        copy.lines = merged
+        return copy
+    }
 }

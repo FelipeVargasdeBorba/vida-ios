@@ -27,7 +27,6 @@ extension BudgetCategory {
         case .fixos: Color(light: 0x98A3B5, dark: 0x8F9BB0)
         case .alimentacao: Color(light: 0xE9A66B, dark: 0xF0B47E)
         case .transporte: Color(light: 0xE0BA48, dark: 0xEDCB63)
-        case .lazer: Color(light: 0xDE8DAE, dark: 0xE9A1BE)
         case .outro: Color(light: 0xAE93DC, dark: 0xBDA5E8)
         case .poupanca: Color(light: 0x6DB592, dark: 0x7CC6A4)
         }

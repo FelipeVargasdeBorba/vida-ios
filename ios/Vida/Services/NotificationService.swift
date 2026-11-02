@@ -13,7 +13,7 @@ enum NotificationService {
             .filter { $0.remindOn && $0.dueDay > 0 }
             .map { f in
                 BillReminder(title: f.name.isEmpty ? f.category.title : f.name,
-                             body: "\(Money.format(f.monthlyCents, currency)) · toque para marcar como paga",
+                             body: "\(Money.format(f.monthlyCents, currency)) · tap to mark as paid",
                              dueDay: f.dueDay,
                              paid: Set((f.checks ?? []).filter { $0.kind == .bill }.map(\.forDate)))
             }

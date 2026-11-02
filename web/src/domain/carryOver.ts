@@ -48,8 +48,8 @@ export function carry(
   return total;
 }
 
-/** Onde a sobra entra (e de onde a falta sai), na ordem: Lazer, Outro, Alimentação, Transporte. */
-export const CARRY_ORDER: Category[] = ['lazer', 'outro', 'alimentacao', 'transporte'];
+/** Onde a sobra entra (e de onde a falta sai), na ordem: Outro, Alimentação, Transporte. */
+export const CARRY_ORDER: Category[] = ['outro', 'alimentacao', 'transporte'];
 
 /**
  * Sobra entra inteira na primeira categoria da conta de gastos. Falta é descontada na ordem, sem deixar

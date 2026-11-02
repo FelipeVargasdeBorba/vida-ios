@@ -6,7 +6,10 @@ import { type AppState, newId } from './state';
 import { store } from './store';
 
 /** Nota dos aportes criados pelo checklist (para poder desfazer só esses). */
-export const GOAL_NOTE = 'Separado no checklist';
+export const GOAL_NOTE = 'Set aside from checklist';
+/** Nota usada antes de o app ser traduzido; aportes antigos continuam sendo reconhecidos. */
+const LEGACY_GOAL_NOTE = 'Separado no checklist';
+export const isGoalNote = (note: string) => note === GOAL_NOTE || note === LEGACY_GOAL_NOTE;
 
 export function toggleTransfer(m: FinanceModel): void {
   store.update((s) => {
@@ -25,7 +28,7 @@ export function toggleBill(b: BillRow): void {
 /** Desfaz as transferências que o checklist registrou neste período. */
 export function undoGoalTransfer(row: GoalRow, period: PayPeriod): void {
   store.update((s) => {
-    s.contributions = s.contributions.filter((c) => !(c.goalId === row.goal.id && c.note === GOAL_NOTE && periodContains(period, c.day)));
+    s.contributions = s.contributions.filter((c) => !(c.goalId === row.goal.id && isGoalNote(c.note) && periodContains(period, c.day)));
   });
 }
 

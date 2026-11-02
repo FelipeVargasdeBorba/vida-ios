@@ -26,7 +26,7 @@ Receber o salário e decidir, a cada mês, quanto vai para gastos, quanto fica n
 
 **Finanças**
 - **O salário lançado define o plano.** A renda do período é a soma das entradas com origem "Salário"; outras entradas não mudam o plano.
-- **Divisão em três destinos**, com gráfico de rosca (Swift Charts): conta de gastos (Alimentação, Transporte, Lazer, Outro), **saves** (aluguel, fixos e reserva) e **uma conta para cada meta**.
+- **Divisão em três destinos**, com gráfico de rosca (Swift Charts): conta de gastos (Alimentação, Transporte, Outro), **saves** (aluguel, fixos e reserva) e **uma conta para cada meta**.
 - **Cinco modelos de divisão** (de 50/30/20 a 50% de poupança) e ajuste da fatia "Outro".
 - **Checklist do período:** separar para saves, pagar cada conta fixa e transferir para cada meta, com o valor real transferido (o plano se adapta).
 - **Gastos fixos com vencimento e lembrete** no dia, que não toca se a conta já foi marcada como paga.
@@ -57,7 +57,7 @@ Mais detalhes em [docs/pt/ARCHITECTURE.md](docs/pt/ARCHITECTURE.md) e as regras 
 
 ## Testes
 
-**75 testes em Swift** (iOS) e **88 testes em Vitest** (web) cobrem as regras de cálculo (períodos de pagamento, orçamento, metas, adaptação, divisão entre contas, vencimentos, sobra acumulada e agenda). O CI roda os dois a cada push.
+**77 testes em Swift** (iOS) e **93 testes em Vitest** (web) cobrem as regras de cálculo (períodos de pagamento, orçamento, metas, adaptação, divisão entre contas, vencimentos, sobra acumulada e agenda). O CI roda os dois a cada push.
 
 ```sh
 cd ios && xcodegen generate

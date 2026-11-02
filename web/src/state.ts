@@ -11,8 +11,6 @@ export interface Settings {
   /** ISO: 1 = segunda … 7 = domingo. */
   payWeekday: number;
   preset: PresetId;
-  /** Pontos percentuais tirados do Lazer para "Outro". */
-  outroPoints: number;
   adaptEnabled: boolean;
   flexibleOrder: Category[];
   foodMinimum: number;
@@ -159,7 +157,7 @@ export function defaultState(): AppState {
   return {
     version: 1,
     settings: {
-      currency: 'EUR', frequency: 'monthly', payDayOfMonth: 1, payWeekday: 5, preset: 'balanced', outroPoints: 5,
+      currency: 'EUR', frequency: 'monthly', payDayOfMonth: 1, payWeekday: 5, preset: 'balanced',
       adaptEnabled: false, flexibleOrder: [...DEFAULT_FLEXIBLE_ORDER], foodMinimum: 0, acceptedShortfallPeriodStart: null,
       spendingAccount: [...DEFAULT_SPENDING_ACCOUNT], savesBalance: 0, savesBalanceUpdatedAt: null, carryFromDay: null, reminderMinutes: 540, lastBackupAt: null,
     },
@@ -167,8 +165,8 @@ export function defaultState(): AppState {
     workDays: [1, 2, 3, 4, 5, 6, 7].map((weekday) => ({ weekday, isOn: false, startMinutes: 540, endMinutes: 1080 })),
     agenda: [],
     noteLists: [
-      { id: newId(), name: 'Compras', sortOrder: 0 },
-      { id: newId(), name: 'Deveres', sortOrder: 1 },
+      { id: newId(), name: 'Shopping', sortOrder: 0 },
+      { id: newId(), name: 'To do', sortOrder: 1 },
     ],
     noteItems: [],
   };

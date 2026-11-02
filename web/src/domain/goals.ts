@@ -65,16 +65,16 @@ export interface SavingsCheck {
   isEnough: boolean;
 }
 
-const savingsOf = (income: number, preset: Preset, outroPoints: number) =>
-  split(income, percentsFor(preset, outroPoints)).poupanca;
+const savingsOf = (income: number, preset: Preset) =>
+  split(income, percentsFor(preset)).poupanca;
 
-export function checkSavings(income: number, preset: Preset, outroPoints: number, required: number): SavingsCheck {
-  const planned = savingsOf(income, preset, outroPoints);
+export function checkSavings(income: number, preset: Preset, required: number): SavingsCheck {
+  const planned = savingsOf(income, preset);
   const base = { planned, required, shortfall: Math.max(0, required - planned), isEnough: planned >= required };
   if (planned >= required) return { ...base, suggestion: null };
   const suggestion =
     PRESETS_BY_AGGRESSIVENESS.find(
-      (p) => savingsPercent(p) > savingsPercent(preset) && savingsOf(income, p, outroPoints) >= required,
+      (p) => savingsPercent(p) > savingsPercent(preset) && savingsOf(income, p) >= required,
     ) ?? null;
   return { ...base, suggestion };
 }

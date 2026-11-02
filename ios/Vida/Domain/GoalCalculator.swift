@@ -63,11 +63,11 @@ enum GoalCalculator {
         }
     }
 
-    static func check(incomeCents: Int, preset: BudgetPreset, outroPoints: Int, required: Int) -> SavingsCheck {
-        let planned = savings(incomeCents, preset, outroPoints)
+    static func check(incomeCents: Int, preset: BudgetPreset, required: Int) -> SavingsCheck {
+        let planned = savings(incomeCents, preset)
         guard planned < required else { return SavingsCheck(planned: planned, required: required, suggestion: nil) }
         let suggestion = BudgetPreset.byAggressiveness.first {
-            $0.savingsPercent > preset.savingsPercent && savings(incomeCents, $0, outroPoints) >= required
+            $0.savingsPercent > preset.savingsPercent && savings(incomeCents, $0) >= required
         }
         return SavingsCheck(planned: planned, required: required, suggestion: suggestion)
     }
@@ -86,7 +86,7 @@ enum GoalCalculator {
         return PayPeriodCalculator.periodStart(offset: periods, from: period, schedule: schedule, calendar: calendar)
     }
 
-    private static func savings(_ income: Int, _ preset: BudgetPreset, _ outroPoints: Int) -> Int {
-        BudgetCalculator.split(incomeCents: income, percents: preset.percents(outroPoints: outroPoints))[.poupanca] ?? 0
+    private static func savings(_ income: Int, _ preset: BudgetPreset) -> Int {
+        BudgetCalculator.split(incomeCents: income, percents: preset.percents)[.poupanca] ?? 0
     }
 }

@@ -25,19 +25,19 @@ struct AgendaView: View {
                 }
                 Section(Fmt.day(selected)) {
                     if let shift {
-                        Label("Turno \(NotificationPlanner.timeText(shift.startMinutes))–\(NotificationPlanner.timeText(shift.endMinutes))",
+                        Label("Shift \(NotificationPlanner.timeText(shift.startMinutes))–\(NotificationPlanner.timeText(shift.endMinutes))",
                               systemImage: "briefcase.fill")
                             .foregroundStyle(.tint)
                     }
                     if dayItems.isEmpty && shift == nil {
-                        Text("Nada neste dia").foregroundStyle(.secondary)
+                        Text("Nothing on this day").foregroundStyle(.secondary)
                     }
                     ForEach(dayItems) { item in
                         Button { editing = AgendaDraft(item: item, kind: item.kind) } label: { AgendaRow(item: item) }
                     }
                 }
                 Section {
-                    NavigationLink { AllAgendaItemsView() } label: { Label("Todos os itens", systemImage: "list.bullet") }
+                    NavigationLink { AllAgendaItemsView() } label: { Label("All items", systemImage: "list.bullet") }
                     NavigationLink { WorkScheduleView() } label: { Label("Dias de trabalho", systemImage: "briefcase") }
                 }
             }
@@ -45,18 +45,18 @@ struct AgendaView: View {
             .navigationTitle("Agenda")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Hoje") { selected = calendar.startOfDay(for: Date()) }
+                    Button("Today") { selected = calendar.startOfDay(for: Date()) }
                 }
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
                         Button { editing = AgendaDraft(kind: .obligation, day: selected) } label: {
-                            Label("Obrigação", systemImage: AgendaKind.obligation.symbol)
+                            Label("Commitment", systemImage: AgendaKind.obligation.symbol)
                         }
                         Button { editing = AgendaDraft(kind: .reminder, day: selected) } label: {
-                            Label("Lembrete", systemImage: AgendaKind.reminder.symbol)
+                            Label("Reminder", systemImage: AgendaKind.reminder.symbol)
                         }
                     } label: { Image(systemName: "plus.circle.fill") }
-                    .accessibilityLabel("Novo item")
+                    .accessibilityLabel("New item")
                 }
             }
             .sheet(item: $editing) { AgendaItemForm(draft: $0) }
@@ -75,7 +75,7 @@ struct AgendaRow: View {
                 .foregroundStyle(.primary)
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.title.isEmpty ? item.kind.title : item.title).foregroundStyle(.primary)
-                Text(item.kind == .obligation ? "até \(NotificationPlanner.timeText(item.endMinutes))" : item.kind.title)
+                Text(item.kind == .obligation ? "until \(NotificationPlanner.timeText(item.endMinutes))" : item.kind.title)
                     .font(.caption).foregroundStyle(.secondary)
             }
             Spacer()
@@ -95,7 +95,7 @@ private struct WeekStrip: View {
             Button { selected = PayPeriodCalculator.addDays(-7, to: selected, calendar) } label: {
                 Image(systemName: "chevron.left").frame(width: 24, height: 44)
             }
-            .accessibilityLabel("Semana anterior")
+            .accessibilityLabel("Previous week")
             ForEach(0..<7, id: \.self) { i in
                 let day = PayPeriodCalculator.addDays(i, to: weekStart, calendar)
                 let isSel = day == selected
@@ -113,7 +113,7 @@ private struct WeekStrip: View {
             Button { selected = PayPeriodCalculator.addDays(7, to: selected, calendar) } label: {
                 Image(systemName: "chevron.right").frame(width: 24, height: 44)
             }
-            .accessibilityLabel("Próxima semana")
+            .accessibilityLabel("Next week")
         }
         .buttonStyle(.plain)
     }
@@ -128,8 +128,8 @@ private struct AllAgendaItemsView: View {
         List {
             ForEach(AgendaKind.allCases) { kind in
                 let group = items.filter { $0.kind == kind }
-                Section(kind == .obligation ? "Obrigações" : "Lembretes") {
-                    if group.isEmpty { Text("Nenhum").foregroundStyle(.secondary) }
+                Section(kind == .obligation ? "Commitments" : "Reminders") {
+                    if group.isEmpty { Text("None").foregroundStyle(.secondary) }
                     ForEach(group) { item in
                         Button { editing = AgendaDraft(item: item, kind: kind) } label: {
                             VStack(alignment: .leading, spacing: 2) {
@@ -142,14 +142,14 @@ private struct AllAgendaItemsView: View {
                                 context.delete(item)
                                 try? context.save()
                                 NotificationService.refresh(context)
-                            } label: { Label("Apagar", systemImage: "trash") }
+                            } label: { Label("Delete", systemImage: "trash") }
                         }
                     }
                 }
             }
         }
         .vidaList()
-        .navigationTitle("Todos os itens")
+        .navigationTitle("All items")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $editing) { AgendaItemForm(draft: $0) }
     }

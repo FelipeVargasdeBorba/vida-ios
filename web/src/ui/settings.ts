@@ -18,45 +18,43 @@ export function setupView(_ctx: Ctx): View {
   const set = (fn: (st: typeof s) => void) => { store.update((state) => fn(state.settings)); redraw(); };
   const el = h('div', { class: 'page' });
 
-  el.append(section('Renda', [
-    labelled('Moeda', select(CURRENCIES.map((c) => ({ value: c.code, label: c.title })), s.currency, (v) => set((x) => { x.currency = v as Currency; }))),
-    h('div', { class: 'row' }, segmented<PayFrequency>([{ value: 'monthly', label: 'Mensal' }, { value: 'weekly', label: 'Semanal' }], s.frequency, (v) => set((x) => { x.frequency = v; }))),
+  el.append(section('Income', [
+    labelled('Currency', select(CURRENCIES.map((c) => ({ value: c.code, label: c.title })), s.currency, (v) => set((x) => { x.currency = v as Currency; }))),
+    h('div', { class: 'row' }, segmented<PayFrequency>([{ value: 'monthly', label: 'Monthly' }, { value: 'weekly', label: 'Weekly' }], s.frequency, (v) => set((x) => { x.frequency = v; }))),
     s.frequency === 'monthly'
-      ? labelled('Dia do pagamento', select(Array.from({ length: 31 }, (_, i) => ({ value: i + 1, label: String(i + 1) })), s.payDayOfMonth, (v) => set((x) => { x.payDayOfMonth = v; })))
-      : labelled('Dia da semana', select(WEEKDAY_NAMES.map((n, i) => ({ value: i + 1, label: n })), s.payWeekday, (v) => set((x) => { x.payWeekday = v; }))),
-  ], 'A renda do período é a soma das entradas marcadas como Salário.'));
+      ? labelled('Payday', select(Array.from({ length: 31 }, (_, i) => ({ value: i + 1, label: String(i + 1) })), s.payDayOfMonth, (v) => set((x) => { x.payDayOfMonth = v; })))
+      : labelled('Weekday', select(WEEKDAY_NAMES.map((n, i) => ({ value: i + 1, label: n })), s.payWeekday, (v) => set((x) => { x.payWeekday = v; }))),
+  ], 'The income for a period is the sum of the entries marked as Salary.'));
 
-  el.append(section('Plano', PRESETS.map((p) => h('button', { type: 'button', class: 'row two', onclick: async () => {
+  el.append(section('Plan', PRESETS.map((p) => h('button', { type: 'button', class: 'row two', onclick: async () => {
     if (p.id === s.preset) return;
-    if (await confirmDialog(`Trocar o plano para ${p.title}?`, presetSummary(p), 'Trocar plano')) set((x) => { x.preset = p.id as PresetId; });
+    if (await confirmDialog(`Switch the plan to ${p.title}?`, presetSummary(p), 'Switch plan')) set((x) => { x.preset = p.id as PresetId; });
   } }, h('span', { class: 'grow left' }, h('span', { class: 'row-title block' }, p.title), h('span', { class: 'caption block' }, presetSummary(p))),
     h('span', { class: 'check-mark' }, p.id === s.preset ? '✓' : ''))),
-  `Atual: ${presetById(s.preset).title}. O plano só muda com a sua confirmação.`));
+  `Current: ${presetById(s.preset).title}. The plan only changes with your confirmation.`));
 
-  el.append(section('Outro', [labelled('Pontos tirados do Lazer', select(Array.from({ length: 11 }, (_, i) => ({ value: i, label: `${i}%` })), s.outroPoints, (v) => set((x) => { x.outroPoints = v; })))]));
-
-  el.append(section('Fica na conta de gastos', SPENDING.map((c: Category) =>
+  el.append(section('Stays in the spending account', SPENDING.map((c: Category) =>
     toggle(CATEGORY_TITLE[c], s.spendingAccount.includes(c), (on) => set((x) => { x.spendingAccount = on ? [...new Set([...x.spendingAccount, c])] : x.spendingAccount.filter((k) => k !== c); }))),
-  'O resto vai para saves. As metas têm conta própria.'));
+  'The rest goes to saves. Goals have their own account.'));
 
-  el.append(section('Adaptar plano', [
-    toggle('Cortar flexíveis para bater a meta', s.adaptEnabled, (on) => set((x) => { x.adaptEnabled = on; })),
-    s.adaptEnabled ? h('div', { class: 'row two' }, h('span', { class: 'grow row-title' }, 'Mínimo de Alimentação'), moneyInput(s.foodMinimum, (c) => set((x) => { x.foodMinimum = c; }))) : null,
+  el.append(section('Adapt plan', [
+    toggle('Cut flexible categories to hit the goal', s.adaptEnabled, (on) => set((x) => { x.adaptEnabled = on; })),
+    s.adaptEnabled ? h('div', { class: 'row two' }, h('span', { class: 'grow row-title' }, 'Minimum for Food'), moneyInput(s.foodMinimum, (c) => set((x) => { x.foodMinimum = c; }))) : null,
     ...(s.adaptEnabled ? s.flexibleOrder.filter((c) => CUTTABLE.includes(c)).map((c, i, all) => h('div', { class: 'row two' },
       h('span', { class: 'grow row-title' }, `${i + 1}. ${CATEGORY_TITLE[c]}`),
       h('span', { class: 'reorder' },
-        h('button', { type: 'button', disabled: i === 0, 'aria-label': 'Subir', onclick: () => swap(i, -1) }, '▲'),
-        h('button', { type: 'button', disabled: i === all.length - 1, 'aria-label': 'Descer', onclick: () => swap(i, 1) }, '▼')))) : []),
-  ], s.adaptEnabled ? 'Corta de cima para baixo. Casa, fixos e o piso das metas nunca são cortados.' : undefined));
+        h('button', { type: 'button', disabled: i === 0, 'aria-label': 'Move up', onclick: () => swap(i, -1) }, '▲'),
+        h('button', { type: 'button', disabled: i === all.length - 1, 'aria-label': 'Move down', onclick: () => swap(i, 1) }, '▼')))) : []),
+  ], s.adaptEnabled ? 'Cuts from top to bottom. Home, fixed expenses and the goal floor are never cut.' : undefined));
 
-  el.append(section('Lembretes', [
-    labelled('Hora no calendário', h('input', { type: 'time', class: 'field', value: timeText(s.reminderMinutes), onchange: (e: Event) => {
+  el.append(section('Reminders', [
+    labelled('Calendar time', h('input', { type: 'time', class: 'field', value: timeText(s.reminderMinutes), onchange: (e: Event) => {
       const v = (e.target as HTMLInputElement).value.split(':');
       const mins = Number(v[0]) * 60 + Number(v[1]);
       if (Number.isFinite(mins)) set((x) => { x.reminderMinutes = mins; });
     } })),
-  ], 'O iPhone não deixa sites agendarem notificações. Por isso, contas e agenda viram eventos do Calendário (botão "Calendário"), com alerta.'));
-  return { title: 'Configurações', el, back: true };
+  ], 'iPhone does not let websites schedule notifications, so bills and agenda items become Calendar events (the "Calendar" button), with an alert.'));
+  return { title: 'Settings', el, back: true };
 
   function swap(i: number, by: number): void {
     const cut = s.flexibleOrder.filter((c) => CUTTABLE.includes(c));
@@ -69,15 +67,15 @@ export function setupView(_ctx: Ctx): View {
 
 function askPassword(title: string, confirm: boolean): Promise<string | null> {
   return new Promise((resolve) => {
-    const pass = h('input', { type: 'password', class: 'field', placeholder: 'Senha', autocomplete: confirm ? 'new-password' : 'current-password' });
-    const again = h('input', { type: 'password', class: 'field', placeholder: 'Repita a senha', autocomplete: 'new-password' });
+    const pass = h('input', { type: 'password', class: 'field', placeholder: 'Password', autocomplete: confirm ? 'new-password' : 'current-password' });
+    const again = h('input', { type: 'password', class: 'field', placeholder: 'Repeat the password', autocomplete: 'new-password' });
     let answer: string | null = null;
     openSheet(title, () => h('div', { class: 'form' }, h('div', { class: 'card' }, h('div', { class: 'row' }, pass), confirm ? h('div', { class: 'row' }, again) : null),
-      confirm ? h('p', { class: 'group-footer' }, 'Sem a senha o backup não abre, e eu não consigo recuperá-la. Anote em um lugar seguro.') : null), {
-      saveLabel: 'Continuar',
+      confirm ? h('p', { class: 'group-footer' }, 'Without the password the backup cannot be opened, and it cannot be recovered. Write it down somewhere safe.') : null), {
+      saveLabel: 'Continue',
       onSave: () => {
-        if (pass.value.length < 6) { toast('Use ao menos 6 caracteres'); return false; }
-        if (confirm && pass.value !== again.value) { toast('As senhas não são iguais'); return false; }
+        if (pass.value.length < 6) { toast('Use at least 6 characters'); return false; }
+        if (confirm && pass.value !== again.value) { toast('The passwords do not match'); return false; }
         answer = pass.value;
       },
     });
@@ -86,21 +84,21 @@ function askPassword(title: string, confirm: boolean): Promise<string | null> {
 }
 
 async function exportEncrypted(): Promise<void> {
-  const password = await askPassword('Senha do backup', true);
+  const password = await askPassword('Backup password', true);
   if (!password) return;
   const text = await encryptBackup(store.exportJson(), password);
   const name = `vida-backup-${new Date().toISOString().slice(0, 10)}.vida`;
   const file = new File([text], name, { type: 'application/octet-stream' });
   let saved = false;
   if (navigator.canShare?.({ files: [file] })) {
-    try { await navigator.share({ files: [file], title: 'Backup do Vida' }); saved = true; } catch { /* cancelado */ }
+    try { await navigator.share({ files: [file], title: 'Vida backup' }); saved = true; } catch { /* cancelled */ }
   } else {
     download(name, text, 'application/octet-stream');
     saved = true;
   }
   if (saved) {
     store.update((s) => { s.settings.lastBackupAt = Date.now(); });
-    toast('Backup criado. Guarde no iCloud Drive.');
+    toast('Backup created. Keep it in iCloud Drive.');
   }
 }
 
@@ -110,9 +108,9 @@ export function backupView(): View {
   const status = h('span', { class: 'num' }, '…');
   void (async () => {
     let persisted = false;
-    try { persisted = (await navigator.storage?.persisted?.()) ?? false; } catch { /* sem suporte */ }
+    try { persisted = (await navigator.storage?.persisted?.()) ?? false; } catch { /* unsupported */ }
     if (!persisted) persisted = await requestPersistence();
-    status.textContent = persisted ? 'protegido' : 'padrão do navegador';
+    status.textContent = persisted ? 'protected' : 'browser default';
   })();
   const file = h('input', { type: 'file', accept: '.vida,.json,application/json,application/octet-stream', class: 'hidden', onchange: async () => {
     const f = file.files?.[0];
@@ -121,83 +119,83 @@ export function backupView(): View {
     try {
       let parsed: unknown = JSON.parse(await f.text());
       if (isEncryptedBackup(parsed)) {
-        const password = await askPassword('Senha do backup', false);
+        const password = await askPassword('Backup password', false);
         if (!password) return;
         const plain = await decryptBackup(parsed, password);
-        if (plain === null) { toast('Senha errada ou arquivo danificado'); return; }
+        if (plain === null) { toast('Wrong password or damaged file'); return; }
         parsed = JSON.parse(plain);
       }
-      if (await confirmDialog('Substituir os dados atuais?', 'Tudo que está neste aparelho será trocado pelo conteúdo do arquivo.', 'Restaurar', true)) {
+      if (await confirmDialog('Replace the current data?', 'Everything on this device will be replaced by the contents of the file.', 'Restore', true)) {
         store.replace(parsed);
-        toast('Dados restaurados');
+        toast('Data restored');
       }
-    } catch { toast('Arquivo inválido'); }
+    } catch { toast('Invalid file'); }
   } });
-  const last = s.lastBackupAt === null ? 'nunca' : fmtStamp(s.lastBackupAt);
+  const last = s.lastBackupAt === null ? 'never' : fmtStamp(s.lastBackupAt);
   el.append(
     section(null, [
-      h('div', { class: 'row value-row' }, h('span', { class: 'row-title' }, 'Último backup'), h('span', { class: `num ${s.lastBackupAt === null ? 'bad' : ''}` }, last)),
-      h('div', { class: 'row value-row' }, h('span', { class: 'row-title' }, 'Proteção no aparelho'), status),
-    ], 'Os dados ficam neste aparelho. Se perder o celular, só o backup salva tudo.'),
+      h('div', { class: 'row value-row' }, h('span', { class: 'row-title' }, 'Last backup'), h('span', { class: `num ${s.lastBackupAt === null ? 'bad' : ''}` }, last)),
+      h('div', { class: 'row value-row' }, h('span', { class: 'row-title' }, 'Protection on this device'), status),
+    ], 'Your data lives on this device. If you lose the phone, only a backup saves everything.'),
     section(null, [
-      h('div', { class: 'row' }, button('Criar backup protegido', () => void exportEncrypted(), 'primary')),
-      h('div', { class: 'row' }, button('Restaurar de um backup', () => file.click())),
+      h('div', { class: 'row' }, button('Create protected backup', () => void exportEncrypted(), 'primary')),
+      h('div', { class: 'row' }, button('Restore from a backup', () => file.click())),
       file,
-    ], 'No menu que abrir, escolha "Salvar em Arquivos" e depois iCloud Drive. O arquivo é cifrado com a sua senha (AES-256). Para trocar de celular, instale o app e restaure.'),
-    section(null, [h('div', { class: 'row' }, button('Apagar todos os dados', async () => {
-      if (await confirmDialog('Apagar tudo?', 'Isso não pode ser desfeito. Crie um backup antes.', 'Apagar tudo', true)) { store.replace(defaultState()); toast('Dados apagados'); }
+    ], 'In the menu that opens, choose "Save to Files" and then iCloud Drive. The file is encrypted with your password (AES-256). To switch phones, install the app and restore.'),
+    section(null, [h('div', { class: 'row' }, button('Delete all data', async () => {
+      if (await confirmDialog('Delete everything?', 'This cannot be undone. Create a backup first.', 'Delete everything', true)) { store.replace(defaultState()); toast('Data deleted'); }
     }, 'danger'))]),
   );
   return { title: 'Backup', el, back: true };
 }
 
-// ── Conta e sincronização ────────────────────────────────────────────────────
+// ── Account and sync ────────────────────────────────────────────────────
 
-const STATUS_TEXT: Record<string, string> = { off: 'desligada', idle: 'em dia', syncing: 'sincronizando…', offline: 'sem conexão', error: 'com problema' };
+const STATUS_TEXT: Record<string, string> = { off: 'off', idle: 'up to date', syncing: 'syncing…', offline: 'offline', error: 'problem' };
 
 export function accountView(): View {
   const el = h('div', { class: 'page' });
   const rerender = () => window.dispatchEvent(new Event('vida:rerender'));
   if (!syncConfigured) {
-    el.append(section(null, [h('div', { class: 'row muted' }, 'A sincronização ainda não foi configurada neste app. Enquanto isso, use o backup protegido.')]),
-      section(null, [h('a', { class: 'row link-row', href: '#/finance/backup' }, h('span', { class: 'grow row-title' }, 'Backup protegido'), h('span', { class: 'chev' }, '›'))]));
-    return { title: 'Conta', el, back: true };
+    el.append(section(null, [h('div', { class: 'row muted' }, 'Sync has not been set up in this app yet. Meanwhile, use the protected backup.')]),
+      section(null, [h('a', { class: 'row link-row', href: '#/finance/backup' }, h('span', { class: 'grow row-title' }, 'Protected backup'), h('span', { class: 'chev' }, '›'))]));
+    return { title: 'Account', el, back: true };
   }
   if (sync.signedIn) {
     el.append(
       section(null, [
-        h('div', { class: 'row value-row' }, h('span', { class: 'row-title' }, 'Conta'), h('span', { class: 'num' }, sync.email ?? '')),
-        h('div', { class: 'row value-row' }, h('span', { class: 'row-title' }, 'Sincronização'), h('span', { class: `num ${sync.status === 'error' ? 'bad' : ''}` }, STATUS_TEXT[sync.status] ?? '')),
-        h('div', { class: 'row value-row' }, h('span', { class: 'row-title' }, 'Última vez'), h('span', { class: 'num' }, sync.lastSyncAt === null ? 'nunca' : fmtStamp(sync.lastSyncAt))),
+        h('div', { class: 'row value-row' }, h('span', { class: 'row-title' }, 'Account'), h('span', { class: 'num' }, sync.email ?? '')),
+        h('div', { class: 'row value-row' }, h('span', { class: 'row-title' }, 'Sync'), h('span', { class: `num ${sync.status === 'error' ? 'bad' : ''}` }, STATUS_TEXT[sync.status] ?? '')),
+        h('div', { class: 'row value-row' }, h('span', { class: 'row-title' }, 'Last synced'), h('span', { class: 'num' }, sync.lastSyncAt === null ? 'never' : fmtStamp(sync.lastSyncAt))),
         sync.message ? h('p', { class: 'row caption bad' }, sync.message) : null,
-      ], 'Tudo que você muda é cifrado neste aparelho e enviado sozinho. Em outro celular, entre com o mesmo e-mail e senha.'),
+      ], 'Every change is encrypted on this device and sent automatically. On another phone, sign in with the same email and password.'),
       section(null, [
-        h('div', { class: 'row' }, button('Sincronizar agora', () => void sync.sync().then(rerender), 'primary')),
-        h('div', { class: 'row' }, button('Sair desta conta', async () => {
-          if (await confirmDialog('Sair da conta?', 'Os dados continuam neste aparelho, mas deixam de ser enviados.', 'Sair')) { sync.signOut(); rerender(); }
+        h('div', { class: 'row' }, button('Sync now', () => void sync.sync().then(rerender), 'primary')),
+        h('div', { class: 'row' }, button('Sign out', async () => {
+          if (await confirmDialog('Sign out?', 'The data stays on this device but stops being sent.', 'Sign out')) { sync.signOut(); rerender(); }
         })),
-      ], 'Se esquecer a senha, os dados da nuvem não podem ser recuperados, porque só ela abre o cofre. Por isso o backup protegido continua disponível em Backup.'),
+      ], 'If you forget the password, the cloud data cannot be recovered, because only it opens the vault. That is why the protected backup remains available under Backup.'),
     );
-    return { title: 'Conta', el, back: true };
+    return { title: 'Account', el, back: true };
   }
-  const email = h('input', { type: 'email', class: 'field wide', placeholder: 'E-mail', autocomplete: 'email', autocapitalize: 'none' });
-  const pass = h('input', { type: 'password', class: 'field wide', placeholder: 'Senha (8+ caracteres)', autocomplete: 'current-password' });
+  const email = h('input', { type: 'email', class: 'field wide', placeholder: 'Email', autocomplete: 'email', autocapitalize: 'none' });
+  const pass = h('input', { type: 'password', class: 'field wide', placeholder: 'Password (8+ characters)', autocomplete: 'current-password' });
   const run = async (create: boolean) => {
-    if (!email.value.includes('@') || pass.value.length < 8) { toast('Informe o e-mail e uma senha com 8+ caracteres'); return; }
+    if (!email.value.includes('@') || pass.value.length < 8) { toast('Enter your email and a password with 8+ characters'); return; }
     try {
       if (create) {
-        if (await sync.signUp(email.value.trim(), pass.value) === 'confirm') { toast('Conta criada. Confirme o e-mail e depois toque em Entrar.'); return; }
+        if (await sync.signUp(email.value.trim(), pass.value) === 'confirm') { toast('Account created. Confirm your email, then tap Sign in.'); return; }
       } else await sync.signIn(email.value.trim(), pass.value);
-      toast('Conta conectada');
-    } catch (e) { toast(e instanceof Error ? e.message : 'Algo deu errado'); }
+      toast('Account connected');
+    } catch (e) { toast(e instanceof Error ? e.message : 'Something went wrong'); }
     rerender();
   };
   el.append(
-    section(null, [h('div', { class: 'row' }, email), h('div', { class: 'row' }, pass)], 'Seus dados são cifrados com a sua senha antes de sair do celular. Nem o servidor consegue lê-los.'),
+    section(null, [h('div', { class: 'row' }, email), h('div', { class: 'row' }, pass)], 'Your data is encrypted with your password before it leaves the phone. Not even the server can read it.'),
     section(null, [
-      h('div', { class: 'row' }, button('Entrar', () => void run(false), 'primary')),
-      h('div', { class: 'row' }, button('Criar conta', () => void run(true))),
-    ], 'Ao entrar num aparelho com dados e a conta já ter dados na nuvem, o app pergunta qual manter.'),
+      h('div', { class: 'row' }, button('Sign in', () => void run(false), 'primary')),
+      h('div', { class: 'row' }, button('Create account', () => void run(true))),
+    ], 'If you sign in on a device that has data while the account already has cloud data, the app asks which one to keep.'),
   );
-  return { title: 'Conta', el, back: true };
+  return { title: 'Account', el, back: true };
 }

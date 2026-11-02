@@ -141,7 +141,7 @@ class Sync {
       this.emit('idle');
     } catch (e) {
       if (e instanceof SyncError) this.emit('error', e.message);
-      else this.emit('offline', 'Sem conexão. Tenta de novo quando voltar.');
+      else this.emit('offline', 'No connection. It will try again when you are back online.');
     } finally {
       this.busy = false;
     }
@@ -149,7 +149,7 @@ class Sync {
 
   private async apply(remote: Row): Promise<void> {
     const plain = await open(remote.data, this.meta.key ?? '');
-    if (plain === null) throw new SyncError('Não consegui abrir os dados da nuvem. A senha pode ter sido trocada.');
+    if (plain === null) throw new SyncError('Could not open the cloud data. The password may have been changed.');
     this.applying = true;
     try { store.replace(JSON.parse(plain)); } finally { this.applying = false; }
     this.meta.knownStamp = remote.updated_at;
@@ -164,7 +164,7 @@ class Sync {
       ? await this.rest<Row[]>('POST', '', { user_id: uid, data: sealed, salt })
       : await this.rest<Row[]>('PATCH', `?user_id=eq.${uid}&updated_at=eq.${encodeURIComponent(expectedStamp)}`, { data: sealed });
     const row = rows[0];
-    if (!row) throw new SyncError('Os dados mudaram em outro aparelho. Abra o app de novo para combinar.');
+    if (!row) throw new SyncError('The data changed on another device. Reopen the app to merge.');
     this.meta.knownStamp = row.updated_at;
     this.meta.pending = false;
   }
@@ -187,7 +187,7 @@ class Sync {
 
   private async token(): Promise<string> {
     const s = this.meta.session;
-    if (!s) throw new SyncError('Entre na sua conta.');
+    if (!s) throw new SyncError('Sign in to your account.');
     if (Date.now() < s.expiresAt - 60_000) return s.access;
     const res = await this.auth('token?grant_type=refresh_token', { refresh_token: s.refresh });
     this.meta.session = toSession(res, s.email);
@@ -200,8 +200,8 @@ class Sync {
       method, body: body === undefined ? undefined : JSON.stringify(body),
       headers: { apikey: SUPABASE_ANON_KEY, authorization: `Bearer ${await this.token()}`, 'content-type': 'application/json', prefer: 'return=representation' },
     });
-    if (res.status === 409) throw new SyncError('Os dados mudaram em outro aparelho. Abra o app de novo para combinar.');
-    if (!res.ok) throw new SyncError(`O servidor recusou (${res.status}).`);
+    if (res.status === 409) throw new SyncError('The data changed on another device. Reopen the app to merge.');
+    if (!res.ok) throw new SyncError(`The server refused the request (${res.status}).`);
     return (await res.json()) as T;
   }
 }
@@ -209,18 +209,18 @@ class Sync {
 interface AuthResponse { access_token?: string; refresh_token?: string; expires_in?: number; user?: { id: string; email?: string }; error_description?: string; msg?: string; message?: string }
 
 function toSession(r: AuthResponse, email = ''): Session {
-  if (!r.access_token || !r.refresh_token || !r.user) throw new SyncError('Resposta inesperada do servidor.');
+  if (!r.access_token || !r.refresh_token || !r.user) throw new SyncError('Unexpected response from the server.');
   return { access: r.access_token, refresh: r.refresh_token, expiresAt: Date.now() + (r.expires_in ?? 3600) * 1000, userId: r.user.id, email: r.user.email ?? email };
 }
 
 function friendly(raw: string): string {
   const t = raw.toLowerCase();
-  if (t.includes('invalid login')) return 'E-mail ou senha incorretos.';
-  if (t.includes('already registered')) return 'Este e-mail já tem conta. Use Entrar.';
-  if (t.includes('password should be')) return 'Senha fraca: use ao menos 8 caracteres.';
-  if (t.includes('rate limit')) return 'Muitas tentativas. Espere um pouco.';
-  if (t.includes('email not confirmed')) return 'Confirme o e-mail pelo link que enviamos.';
-  return raw || 'Algo deu errado. Tente de novo.';
+  if (t.includes('invalid login')) return 'Wrong email or password.';
+  if (t.includes('already registered')) return 'This email already has an account. Use Sign in.';
+  if (t.includes('password should be')) return 'Weak password: use at least 8 characters.';
+  if (t.includes('rate limit')) return 'Too many attempts. Wait a moment.';
+  if (t.includes('email not confirmed')) return 'Confirm your email using the link we sent.';
+  return raw || 'Something went wrong. Try again.';
 }
 
 export const sync = new Sync();

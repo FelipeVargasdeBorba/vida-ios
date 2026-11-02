@@ -28,8 +28,8 @@ function backupBanner(cloud: boolean): HTMLElement {
   const never = store.state.settings.lastBackupAt === null;
   return h('section', { class: 'group' }, h('a', { class: 'card banner', href: hrefTo(FINANCE, cloud ? 'account' : 'backup') },
     h('span', { class: 'banner-icon', 'aria-hidden': 'true' }, '☁️'),
-    h('span', { class: 'grow' }, h('span', { class: 'row-title block' }, cloud ? 'Salve na sua conta' : never ? 'Faça seu primeiro backup' : 'Backup desatualizado'),
-      h('span', { class: 'caption block' }, cloud ? 'Entre para guardar tudo na nuvem e abrir em qualquer celular.' : 'Perdeu o celular, perdeu tudo. Leva 10 segundos.')),
+    h('span', { class: 'grow' }, h('span', { class: 'row-title block' }, cloud ? 'Save to your account' : never ? 'Make your first backup' : 'Backup out of date'),
+      h('span', { class: 'caption block' }, cloud ? 'Sign in to keep everything in the cloud and open it on any phone.' : 'Lose the phone, lose everything. It takes 10 seconds.')),
     h('span', { class: 'chev' }, '›')));
 }
 
@@ -41,18 +41,18 @@ function checkCircle(done: boolean, color: string): HTMLElement {
 
 function billSubtitle(state: BillState, due: number): { text: string; tone: 'bad' | 'warn' | '' } {
   switch (state.type) {
-    case 'paid': return { text: 'pago', tone: '' };
-    case 'overdue': return { text: `venceu há ${plural(state.days, 'dia', 'dias')}`, tone: 'bad' };
-    case 'dueToday': return { text: 'vence hoje', tone: 'warn' };
-    case 'upcoming': return state.days <= 3 ? { text: `vence em ${plural(state.days, 'dia', 'dias')}`, tone: 'warn' } : { text: `vence ${fmtShort(due)}`, tone: '' };
-    case 'noDate': return { text: 'neste período', tone: '' };
+    case 'paid': return { text: 'paid', tone: '' };
+    case 'overdue': return { text: `overdue by ${plural(state.days, 'day', 'days')}`, tone: 'bad' };
+    case 'dueToday': return { text: 'due today', tone: 'warn' };
+    case 'upcoming': return state.days <= 3 ? { text: `due in ${plural(state.days, 'day', 'days')}`, tone: 'warn' } : { text: `due ${fmtShort(due)}`, tone: '' };
+    case 'noDate': return { text: 'this period', tone: '' };
   }
 }
 
-/** Toque no círculo de uma meta: informar quanto foi transferido, ou desfazer. */
+/** Tap on a goal's circle: enter how much was transferred, or undo. */
 export async function goalTap(row: GoalRow, m: FinanceModel): Promise<void> {
   if (row.isDone) {
-    if (await confirmDialog('Desfazer a transferência?', `${row.goal.name}: ${money(row.transferred, m.currency)} deixam de contar neste período.`, 'Desfazer', true)) {
+    if (await confirmDialog('Undo the transfer?', `${row.goal.name}: ${money(row.transferred, m.currency)} no longer counts in this period.`, 'Undo', true)) {
       undoGoalTransfer(row, m.period);
     }
   } else {
@@ -60,7 +60,7 @@ export async function goalTap(row: GoalRow, m: FinanceModel): Promise<void> {
   }
 }
 
-// ── Painel ───────────────────────────────────────────────────────────────────
+// ── Dashboard ───────────────────────────────────────────────────────────────────
 
 export function dashboard(ctx: Ctx): View {
   const s = store.state;
@@ -90,21 +90,21 @@ export function dashboard(ctx: Ctx): View {
     el.append(section(accountTitle('spending', $(spendTotal)), [
       m.carry !== 0 ? carryRow(m, ctx) : null,
       ...spendRows.map((l) => categoryRow(l, m, ctx)),
-    ], spendRows.length ? (spent > spendTotal ? `Gasto ${$(spent)} · passou ${$(spent - spendTotal)}` : `Gasto ${$(spent)} · resta ${$(spendTotal - spent)}`) : undefined));
+    ], spendRows.length ? (spent > spendTotal ? `Spent ${$(spent)} · over by ${$(spent - spendTotal)}` : `Spent ${$(spent)} · ${$(spendTotal - spent)} left`) : undefined));
 
     // Saves
     const reserve = m.split.saves.find((x) => x.kind.type === 'reserve')?.amount ?? 0;
     el.append(section(accountTitle('saves', $(m.split.savesTotal)), [
       ...catLines('saves').map((l) => categoryRow(l, m, ctx)),
-      reserve > 0 ? plainRow('🍃', catColor('poupanca'), 'Reserva', 'o que sobra depois das metas', $(reserve)) : null,
-    ], m.split.savesKept > 0 ? `Separe ao receber. Disso, ${$(m.split.savesKept)} ficam de reserva.` : 'Separe ao receber para pagar as contas.'));
+      reserve > 0 ? plainRow('🍃', catColor('poupanca'), 'Reserve', 'what is left after the goals', $(reserve)) : null,
+    ], m.split.savesKept > 0 ? `Set aside when you get paid. Of that, ${$(m.split.savesKept)} stays as reserve.` : 'Set aside when you get paid to cover the bills.'));
 
     // Metas: cada uma com a sua conta
     if (m.goals.length) {
       el.append(section(accountTitle('goal', $(m.split.goalsTotal)), [
         ...m.goals.map((r, i) => goalSplitRow(r, i, m)),
         !m.savingsCheck.isEnough ? savingsWarning(m) : null,
-      ], 'Cada meta tem a sua conta. Transfira direto para ela, sem passar por saves.'));
+      ], 'Each goal has its own account. Transfer straight to it, without going through saves.'));
     }
     el.append(walletSection(m, ctx));
     if (m.adaptation) el.append(adaptationCard(m));
@@ -112,20 +112,20 @@ export function dashboard(ctx: Ctx): View {
 
   const tile = (symbol: string, title: string, href: string, detail?: string) => h('a', { class: 'nav-tile', href },
     h('span', { class: 'nav-icon', 'aria-hidden': 'true' }, symbol), h('span', { class: 'strong' }, title), detail ? h('span', { class: 'caption' }, detail) : null);
-  el.append(h('section', { class: 'group' }, h('h2', { class: 'group-title' }, 'Explorar'), h('div', { class: 'nav-grid' },
-    tile('🧾', 'Transações', hrefTo(FINANCE, 'transactions'), 'tudo que entrou e saiu'),
-    tile('📌', 'Gastos fixos', hrefTo(FINANCE, 'fixed'), `${store.state.fixed.length} cadastrados`),
-    tile('🎯', 'Metas', hrefTo(FINANCE, 'goals'), m.goals.length ? `${m.goals.length} em andamento` : 'crie a primeira'),
-    tile('🕘', 'Histórico', hrefTo(FINANCE, 'history'), 'compare períodos'),
-    tile('⚙️', 'Configurações', hrefTo(FINANCE, 'setup')),
-    syncConfigured ? tile('☁️', 'Conta e nuvem', hrefTo(FINANCE, 'account'), sync.signedIn ? 'conectada' : 'entrar') : null,
-    tile('💾', 'Backup', hrefTo(FINANCE, 'backup'), 'protegido por senha'))));
+  el.append(h('section', { class: 'group' }, h('h2', { class: 'group-title' }, 'Explore'), h('div', { class: 'nav-grid' },
+    tile('🧾', 'Transactions', hrefTo(FINANCE, 'transactions'), 'everything in and out'),
+    tile('📌', 'Fixed expenses', hrefTo(FINANCE, 'fixed'), `${store.state.fixed.length} set up`),
+    tile('🎯', 'Goals', hrefTo(FINANCE, 'goals'), m.goals.length ? `${m.goals.length} in progress` : 'create the first'),
+    tile('🕘', 'History', hrefTo(FINANCE, 'history'), 'compare periods'),
+    tile('⚙️', 'Settings', hrefTo(FINANCE, 'setup')),
+    syncConfigured ? tile('☁️', 'Account and cloud', hrefTo(FINANCE, 'account'), sync.signedIn ? 'connected' : 'sign in') : null,
+    tile('💾', 'Backup', hrefTo(FINANCE, 'backup'), 'password protected'))));
   if (m.income > 0) {
-    el.append(h('div', { class: 'center' }, button('Salvar no histórico', () => { saveSnapshot(m); toast('Salvo no histórico'); })));
+    el.append(h('div', { class: 'center' }, button('Save to history', () => { saveSnapshot(m); toast('Saved to history'); })));
   }
   return {
-    title: 'Finanças', el,
-    actions: [h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Nova transação', onclick: () => transactionSheet(ctx.today) }, '＋')],
+    title: 'Finance', el,
+    actions: [h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'New transaction', onclick: () => transactionSheet(ctx.today) }, '＋')],
   };
 }
 
@@ -141,13 +141,13 @@ function plainRow(symbol: string, color: string, title: string, caption: string,
 function salaryPrompt(m: FinanceModel, ctx: Ctx): HTMLElement {
   return h('section', { class: 'group' }, h('div', { class: 'card prompt' },
     iconBadge('💶', 'var(--cat-poupanca)'),
-    h('h3', null, 'Recebeu o salário?'),
-    h('p', { class: 'muted' }, 'Lance o valor que caiu na conta e o app mostra quanto deixar para gastos e quanto separar para saves.'),
-    button('Adicionar salário', () => transactionSheet(ctx.today, undefined, 'income'), 'primary'),
-    h('p', { class: 'caption' }, `Período ${fmtPeriod(m.period)}`)));
+    h('h3', null, 'Got your salary?'),
+    h('p', { class: 'muted' }, 'Log the amount that landed in your account and the app shows how much to keep for spending and how much to set aside for saves.'),
+    button('Add salary', () => transactionSheet(ctx.today, undefined, 'income'), 'primary'),
+    h('p', { class: 'caption' }, `Period ${fmtPeriod(m.period)}`)));
 }
 
-/** Valor atual da conta de gastos, com o ritmo diário que ainda cabe no período. */
+/** Current spending-account balance, with the daily pace that still fits the period. */
 function balanceHero(m: FinanceModel, ctx: Ctx): HTMLElement {
   const $ = (c: number) => money(c, m.currency);
   const total = m.split.spendingTotal;
@@ -161,23 +161,23 @@ function balanceHero(m: FinanceModel, ctx: Ctx): HTMLElement {
     h('span', { class: 'tile-title' }, title), h('strong', { class: 'num' }, value), h('span', { class: 'caption' }, caption));
   return h('section', { class: 'group' }, h('div', { class: 'card hero balance' },
     h('div', { class: 'hero-head' },
-      h('span', { class: 'chip' }, m.daysUntilPayday === 0 ? 'Salário hoje' : `Salário em ${plural(m.daysUntilPayday, 'dia', 'dias')}`),
+      h('span', { class: 'chip' }, m.daysUntilPayday === 0 ? 'Payday today' : `Payday in ${plural(m.daysUntilPayday, 'day', 'days')}`),
       h('span', { class: 'muted' }, fmtPeriod(m.period))),
     h('div', { class: 'balance-main' },
-      h('span', { class: 'caption' }, '💳 Conta de gastos agora'),
+      h('span', { class: 'caption' }, '💳 Spending account now'),
       h('strong', { class: `balance-value num ${tone}` }, $(left)),
-      h('span', { class: 'caption num' }, left < 0 ? `passou ${$(-left)} do que cabia (${$(total)})` : `de ${$(total)} · gasto ${$(m.spendingSpent)}`)),
-    bar(used, left < 0 ? 'var(--bad)' : 'var(--cat-lazer)', left < 0),
+      h('span', { class: 'caption num' }, left < 0 ? `${$(-left)} over what fit (${$(total)})` : `of ${$(total)} · spent ${$(m.spendingSpent)}`)),
+    bar(used, left < 0 ? 'var(--bad)' : 'var(--cat-outro)', left < 0),
     h('div', { class: 'tiles' },
-      stat('Por dia', left > 0 ? $(perDay) : '—', left > 0 ? `${plural(m.daysLeft, 'dia', 'dias')} restantes` : 'sem folga'),
-      stat('Hoje', $(today), today > 0 ? 'gasto hoje' : 'nada gasto'),
-      stat('Usado', `${Math.round(Math.min(used, 9.99) * 100)}%`, 'do período')),
+      stat('Per day', left > 0 ? $(perDay) : '—', left > 0 ? `${plural(m.daysLeft, 'day', 'days')} left` : 'no room'),
+      stat('Today', $(today), today > 0 ? 'spent today' : 'nothing spent'),
+      stat('Used', `${Math.round(Math.min(used, 9.99) * 100)}%`, 'of the period')),
     h('div', { class: 'quick' },
-      button('− Gasto', () => transactionSheet(ctx.today), 'primary'),
-      button('+ Entrada', () => transactionSheet(ctx.today, undefined, 'income')))));
+      button('− Expense', () => transactionSheet(ctx.today), 'primary'),
+      button('+ Income', () => transactionSheet(ctx.today, undefined, 'income')))));
 }
 
-/** Gasto acumulado do período contra o ritmo uniforme do orçamento da conta de gastos. */
+/** Cumulative spending against the even pace of the spending-account budget. */
 function paceCard(m: FinanceModel, ctx: Ctx): HTMLElement {
   const s = store.state;
   const spending = new Set(s.settings.spendingAccount);
@@ -186,37 +186,37 @@ function paceCard(m: FinanceModel, ctx: Ctx): HTMLElement {
   const pts = paceSeries(m.period, ctx.today, budget, expenses);
   const idx = Math.max(0, Math.min(pts.length - 1, ctx.today - m.period.start));
   const ahead = (pts[idx]?.spent ?? 0) - (pts[idx]?.ideal ?? 0);
-  const note = budget <= 0 ? 'Sem orçamento na conta de gastos.'
-    : ahead > 0 ? `Você está ${money(ahead, m.currency)} acima do ritmo.` : `Você está ${money(-ahead, m.currency)} abaixo do ritmo.`;
-  return section('📈 Ritmo de gastos', [h('div', { class: 'chart-card' }, areaChart({
+  const note = budget <= 0 ? 'No budget in the spending account.'
+    : ahead > 0 ? `You are ${money(ahead, m.currency)} above the pace.` : `You are ${money(-ahead, m.currency)} below the pace.`;
+  return section('📈 Spending pace', [h('div', { class: 'chart-card' }, areaChart({
     points: pts.map((p) => ({ label: fmtShort(p.day), value: p.spent, ref: p.ideal })),
-    cap: budget, capLabel: 'Orçamento', valueLabel: 'Gasto', refLabel: 'Ritmo ideal', fmt: (c) => money(c, m.currency),
-    initial: idx, overIsBad: true, ariaLabel: 'Gasto acumulado no período',
-  }))], `${note} Toque ou arraste no gráfico para ver cada dia.`);
+    cap: budget, capLabel: 'Budget', valueLabel: 'Spent', refLabel: 'Even pace', fmt: (c) => money(c, m.currency),
+    initial: idx, overIsBad: true, ariaLabel: 'Cumulative spending in the period',
+  }))], `${note} Tap or drag on the chart to see each day.`);
 }
 
-/** Rosca do salário: toque numa fatia para ver o valor e a porcentagem. */
+/** Salary donut: tap a slice to see the amount and percentage. */
 function splitCard(m: FinanceModel): HTMLElement {
   const { split } = m;
   const total = split.all.reduce((a, x) => a + x.amount, 0);
   const idle = () => [
-    h('span', { class: 'caption' }, 'Separar'), h('strong', { class: 'num' }, money(split.movedOut, m.currency)),
-    h('span', { class: 'caption' }, `de ${money(m.income, m.currency)}`)];
+    h('span', { class: 'caption' }, 'Move'), h('strong', { class: 'num' }, money(split.movedOut, m.currency)),
+    h('span', { class: 'caption' }, `of ${money(m.income, m.currency)}`)];
   const center = h('div', { class: 'donut-text' }, idle());
   const tile = (account: BankAccount, amount: number, caption: string) => h('div', { class: `tile ${account}` },
     h('span', { class: 'tile-title' }, `${accountIcon[account]} ${ACCOUNT_TITLE[account]}`), h('strong', { class: 'num' }, money(amount, m.currency)), h('span', { class: 'caption' }, caption));
   const chart = donut(split.all, center, (i) => {
     const x = i === null ? undefined : split.all[i];
     center.replaceChildren(...(x
-      ? [h('span', { class: 'caption' }, x.title), h('strong', { class: 'num' }, money(x.amount, m.currency)), h('span', { class: 'caption' }, `${Math.round((x.amount / Math.max(1, total)) * 100)}% do salário`)]
+      ? [h('span', { class: 'caption' }, x.title), h('strong', { class: 'num' }, money(x.amount, m.currency)), h('span', { class: 'caption' }, `${Math.round((x.amount / Math.max(1, total)) * 100)}% of salary`)]
       : idle()));
   });
-  return section('🥧 Divisão do salário', [h('div', { class: 'hero' }, chart,
+  return section('🥧 Salary split', [h('div', { class: 'hero' }, chart,
     h('div', { class: 'tiles' },
-      tile('spending', split.spendingTotal, 'dia a dia'), tile('saves', split.savesTotal, 'contas e reserva'),
-      split.goalsTotal > 0 ? tile('goal', split.goalsTotal, split.goals.length === 1 ? 'conta da meta' : `${split.goals.length} contas`) : null),
+      tile('spending', split.spendingTotal, 'day to day'), tile('saves', split.savesTotal, 'bills and reserve'),
+      split.goalsTotal > 0 ? tile('goal', split.goalsTotal, split.goals.length === 1 ? 'goal account' : `${split.goals.length} accounts`) : null),
     h('ul', { class: 'legend' }, split.all.map((x) => h('li', null, h('i', { style: { background: sliceColor(x) } }), h('span', null, x.title), h('span', { class: 'num muted' }, money(x.amount, m.currency))))))],
-  'Toque numa fatia da rosca para ver o detalhe.');
+  'Tap a slice of the donut for details.');
 }
 
 function checklist(m: FinanceModel): HTMLElement | null {
@@ -235,34 +235,34 @@ function checklist(m: FinanceModel): HTMLElement | null {
 
   const rows: Node[] = [];
   if (showTransfer) {
-    rows.push(item(!!m.transferCheck, 'var(--cat-poupanca)', 'Separar para saves', m.transferCheck ? 'feito' : 'mover ao receber o salário', '', $(m.split.savesTotal), () => toggleTransfer(m)));
+    rows.push(item(!!m.transferCheck, 'var(--cat-poupanca)', 'Move to saves', m.transferCheck ? 'done' : 'move when you get paid', '', $(m.split.savesTotal), () => toggleTransfer(m)));
   }
   for (const b of m.bills) {
     const sub = billSubtitle(b.state, b.due);
     rows.push(item(!!b.check, catColor(b.fixed.category), b.title, sub.text, sub.tone, $(b.fixed.monthly), () => toggleBill(b)));
   }
   for (const { r, i } of goals) {
-    const sub = r.isDone ? (r.transferred === r.allocation ? 'transferido' : `transferido · plano ${$(r.allocation)}`)
-      : r.transferred > 0 ? 'falta transferir para a conta da meta' : 'transferir para a conta da meta';
-    rows.push(item(r.isDone, goalColor(i), `Meta ${r.goal.name}`, sub, '', $(r.isDone ? r.transferred : r.toMove), () => void goalTap(r, m)));
+    const sub = r.isDone ? (r.transferred === r.allocation ? 'transferred' : `transferred · plan ${$(r.allocation)}`)
+      : r.transferred > 0 ? 'still to transfer to the goal account' : 'transfer to the goal account';
+    rows.push(item(r.isDone, goalColor(i), `Goal ${r.goal.name}`, sub, '', $(r.isDone ? r.transferred : r.toMove), () => void goalTap(r, m)));
   }
-  const header = h('span', { class: `account-title${done === total ? ' all-done' : ''}` }, h('span', null, '✅ Checklist'), h('span', { class: 'num' }, `${done} de ${total}`));
+  const header = h('span', { class: `account-title${done === total ? ' all-done' : ''}` }, h('span', null, '✅ Checklist'), h('span', { class: 'num' }, `${done} of ${total}`));
   return section(header, rows);
 }
 
 function carryRow(m: FinanceModel, ctx: Ctx): HTMLElement {
   const weekly = store.state.settings.frequency === 'weekly';
   const positive = m.carry > 0;
-  const title = positive ? (weekly ? 'Sobra da semana passada' : 'Sobra do mês passado') : (weekly ? 'Gasto a mais na semana passada' : 'Gasto a mais no mês passado');
-  const caption = positive ? `somada a ${CATEGORY_TITLE[m.carryCategory ?? 'lazer']}` : 'descontada dos gastos do dia a dia';
+  const title = positive ? (weekly ? 'Left over from last week' : 'Left over from last month') : (weekly ? 'Overspent last week' : 'Overspent last month');
+  const caption = positive ? `added to ${CATEGORY_TITLE[m.carryCategory ?? 'outro']}` : 'taken from day-to-day spending';
   const row = plainRow(positive ? '↪️' : '↩️', positive ? 'var(--cat-poupanca)' : 'var(--bad)', title, caption, `${positive ? '+' : '−'} ${money(Math.abs(m.carry), m.currency)}`);
   row.append(h('button', {
     type: 'button', class: 'mini', onclick: async () => {
-      if (await confirmDialog('Zerar a sobra?', 'O plano deste período volta ao valor normal. Use quando o saldo da conta de gastos no banco não bater com o app.', 'Zerar e recomeçar daqui')) {
+      if (await confirmDialog('Reset the carry-over?', 'This period\'s plan goes back to its normal value. Use it when the spending account balance at the bank does not match the app.', 'Reset and restart here')) {
         resetCarry(currentPeriod(store.state, ctx.today));
       }
     },
-  }, 'Zerar'));
+  }, 'Reset'));
   return row;
 }
 
@@ -275,10 +275,10 @@ function categoryRow(line: BudgetLine, m: FinanceModel, _ctx: Ctx): HTMLElement 
       h('div', { class: 'row-head' }, h('span', { class: 'row-title' }, CATEGORY_TITLE[line.category]), h('span', { class: 'num strong' }, $(line.target))),
       bar(progress(line), catColor(line.category), over),
       h('div', { class: 'row-foot caption num' },
-        h('span', null, line.fixed > line.spent ? `fixos ${$(line.fixed)}` : `gasto ${$(line.spent)}`),
-        h('span', { class: over ? 'bad' : '' }, over ? `passou ${$(-remaining(line))}` : `resta ${$(remaining(line))}`)),
-      fixedOver(line) ? h('div', { class: 'caption bad' }, 'Os fixos passam do plano') : null,
-      adjusted !== undefined && adjusted !== line.target ? h('div', { class: 'caption warn' }, `Ajustado para ${$(adjusted)}`) : null));
+        h('span', null, line.fixed > line.spent ? `fixed ${$(line.fixed)}` : `spent ${$(line.spent)}`),
+        h('span', { class: over ? 'bad' : '' }, over ? `over by ${$(-remaining(line))}` : `${$(remaining(line))} left`)),
+      fixedOver(line) ? h('div', { class: 'caption bad' }, 'Fixed expenses exceed the plan') : null,
+      adjusted !== undefined && adjusted !== line.target ? h('div', { class: 'caption warn' }, `Adjusted to ${$(adjusted)}`) : null));
 }
 
 function goalSplitRow(r: GoalRow, i: number, m: FinanceModel): HTMLElement {
@@ -287,20 +287,20 @@ function goalSplitRow(r: GoalRow, i: number, m: FinanceModel): HTMLElement {
     h('div', { class: 'grow' },
       h('div', { class: 'row-head' }, h('span', { class: 'row-title' }, r.goal.name), h('span', { class: 'num strong' }, $(r.effectiveAllocation))),
       bar(r.status.progress, goalColor(i)),
-      h('div', { class: 'row-foot caption num' }, h('span', null, `${$(r.status.saved)} de ${$(r.status.target)}`),
-        h('span', null, r.status.isComplete ? 'concluída' : `até ${fmtShort(r.goal.deadline)}`))));
+      h('div', { class: 'row-foot caption num' }, h('span', null, `${$(r.status.saved)} of ${$(r.status.target)}`),
+        h('span', null, r.status.isComplete ? 'completed' : `by ${fmtShort(r.goal.deadline)}`))));
 }
 
 function savingsWarning(m: FinanceModel): HTMLElement {
   const c = m.savingsCheck;
   return h('div', { class: 'row warning' },
-    h('p', { class: 'bad' }, `⚠️ Faltam ${money(c.shortfall, m.currency)} por período para as metas.`),
+    h('p', { class: 'bad' }, `⚠️ ${money(c.shortfall, m.currency)} per period short for the goals.`),
     c.suggestion
-      ? button(`Trocar para ${c.suggestion.title}`, async () => {
+      ? button(`Switch to ${c.suggestion.title}`, async () => {
         const next = c.suggestion;
-        if (next && await confirmDialog(`Trocar o plano para ${next.title}?`, '', 'Trocar plano')) store.update((s) => { s.settings.preset = next.id; });
+        if (next && await confirmDialog(`Switch the plan to ${next.title}?`, '', 'Switch plan')) store.update((s) => { s.settings.preset = next.id; });
       })
-      : h('p', { class: 'caption' }, 'Nenhum plano cobre sozinho. Estenda o prazo ou reduza a meta.'));
+      : h('p', { class: 'caption' }, 'No plan covers it alone. Extend the deadline or reduce the goal.'));
 }
 
 function walletSection(m: FinanceModel, ctx: Ctx): HTMLElement {
@@ -309,26 +309,26 @@ function walletSection(m: FinanceModel, ctx: Ctx): HTMLElement {
   const input = moneyInput(s.savesBalance, (c) => setSavesBalance(c, ctx.today));
   const rows: Child[] = [
     h('label', { class: 'row two' }, iconBadge('🏦', 'var(--cat-poupanca)'),
-      h('div', { class: 'grow' }, h('div', { class: 'row-title' }, 'Já tenho em saves'),
-        h('div', { class: 'caption' }, s.savesBalanceUpdatedAt !== null ? `atualizado ${fmtShort(s.savesBalanceUpdatedAt)}` : 'toque para informar')), input),
-    valueRow('Entra deste salário', `+ ${money(w.incoming, m.currency)}`, 'good'),
-    w.bills > 0 ? valueRow('Sai para contas', `− ${money(w.bills, m.currency)}`) : null,
-    h('div', { class: 'row value-row strong-row' }, h('span', { class: 'row-title' }, `Fica depois do ${store.state.settings.frequency === 'weekly' ? 'semana' : 'mês'}`), h('span', { class: 'num' }, money(w.afterPeriod, m.currency))),
+      h('div', { class: 'grow' }, h('div', { class: 'row-title' }, 'Already in saves'),
+        h('div', { class: 'caption' }, s.savesBalanceUpdatedAt !== null ? `updated ${fmtShort(s.savesBalanceUpdatedAt)}` : 'tap to enter')), input),
+    valueRow('Comes in from this salary', `+ ${money(w.incoming, m.currency)}`, 'good'),
+    w.bills > 0 ? valueRow('Goes out to bills', `− ${money(w.bills, m.currency)}`) : null,
+    h('div', { class: 'row value-row strong-row' }, h('span', { class: 'row-title' }, `Left after the ${store.state.settings.frequency === 'weekly' ? 'week' : 'month'}`), h('span', { class: 'num' }, money(w.afterPeriod, m.currency))),
   ];
-  return section('🏦 Carteira saves', rows);
+  return section('🏦 Saves wallet', rows);
 }
 
 function adaptationCard(m: FinanceModel): HTMLElement {
   const a = m.adaptation;
   if (!a) return h('div');
-  const status = !a.isNeeded ? 'Tudo dentro do plano' : a.isFeasible ? `Ajustado para compensar ${money(a.need, m.currency)}`
-    : m.shortfallAccepted ? `Atraso aceito: faltam ${money(a.shortfall, m.currency)}` : `Faltam ${money(a.shortfall, m.currency)} para a meta`;
-  return section('Adaptação automática', [h('a', { class: 'row link-row', href: hrefTo(FINANCE, 'adaptation') },
-    h('span', { class: 'grow' }, h('span', { class: 'row-title block' }, `Pode gastar ${money(a.dailyAllowance, m.currency)} por dia`),
+  const status = !a.isNeeded ? 'Everything within the plan' : a.isFeasible ? `Adjusted to make up ${money(a.need, m.currency)}`
+    : m.shortfallAccepted ? `Delay accepted: ${money(a.shortfall, m.currency)} short` : `${money(a.shortfall, m.currency)} short for the goal`;
+  return section('Automatic adaptation', [h('a', { class: 'row link-row', href: hrefTo(FINANCE, 'adaptation') },
+    h('span', { class: 'grow' }, h('span', { class: 'row-title block' }, `You can spend ${money(a.dailyAllowance, m.currency)} per day`),
       h('span', { class: `caption block ${a.isFeasible || m.shortfallAccepted ? '' : 'bad'}` }, status)), h('span', { class: 'chev' }, '›'))]);
 }
 
-// ── Transações ───────────────────────────────────────────────────────────────
+// ── Transactions ───────────────────────────────────────────────────────────────
 
 let txPeriodStart: number | null = null;
 let txFilter: Category | '' = '';
@@ -347,42 +347,42 @@ export function transactionsView(ctx: Ctx): View {
     .sort((a, b) => b.day - a.day);
   const go = (p: PayPeriod) => { txPeriodStart = p.start; window.dispatchEvent(new Event('vida:rerender')); };
   const nav = h('div', { class: 'period-nav' },
-    h('button', { type: 'button', 'aria-label': 'Período anterior', onclick: () => go(previousPeriod(period, schedule)) }, '‹'),
+    h('button', { type: 'button', 'aria-label': 'Previous period', onclick: () => go(previousPeriod(period, schedule)) }, '‹'),
     h('strong', null, fmtPeriod(period)),
-    h('button', { type: 'button', 'aria-label': 'Próximo período', onclick: () => go(nextPeriod(period, schedule)) }, '›'));
+    h('button', { type: 'button', 'aria-label': 'Next period', onclick: () => go(nextPeriod(period, schedule)) }, '›'));
   const periodExpenses = s.transactions.filter((t) => periodContains(period, t.day) && t.kind === 'expense');
   const chip = (value: Category | '', label: string, amount: number) => h('button', {
     type: 'button', class: `chip-btn${txFilter === value ? ' on' : ''}`, 'aria-pressed': txFilter === value,
     onclick: () => { txFilter = txFilter === value ? '' : value; window.dispatchEvent(new Event('vida:rerender')); },
   }, h('span', null, label), amount > 0 ? h('span', { class: 'num caption' }, money(amount, cur)) : null);
-  const filter = h('div', { class: 'chips', role: 'group', 'aria-label': 'Filtrar por categoria' },
-    chip('', 'Todas', periodExpenses.reduce((a, t) => a + t.amount, 0)),
+  const filter = h('div', { class: 'chips', role: 'group', 'aria-label': 'Filter by category' },
+    chip('', 'All', periodExpenses.reduce((a, t) => a + t.amount, 0)),
     SPENDING.map((c) => chip(c, `${CATEGORY_ICON[c]} ${TRANSACTION_TITLE[c]}`, periodExpenses.filter((t) => t.category === c).reduce((a, t) => a + t.amount, 0))));
 
   const el = h('div', { class: 'page' }, nav, filter);
-  if (items.length === 0) el.append(emptyState('🧾', 'Sem transações', 'Toque em ＋ para lançar.'));
+  if (items.length === 0) el.append(emptyState('🧾', 'No transactions', 'Tap ＋ to add one.'));
   else {
     const income = items.filter((t) => t.kind === 'income').reduce((a, t) => a + t.amount, 0);
     const spent = items.filter((t) => t.kind === 'expense').reduce((a, t) => a + t.amount, 0);
-    el.append(section(null, [valueRow('Entradas', money(income, cur), 'good'), valueRow('Gastos', money(spent, cur))]));
+    el.append(section(null, [valueRow('Income', money(income, cur), 'good'), valueRow('Expenses', money(spent, cur))]));
     const days = [...new Set(items.map((t) => t.day))];
     for (const day of days) {
       el.append(section(fmtLong(day), items.filter((t) => t.day === day).map((t) =>
         h('button', { type: 'button', class: 'row two', onclick: () => transactionSheet(ctx.today, t) },
           iconBadge(t.kind === 'income' ? '⬇️' : CATEGORY_ICON[t.category], t.kind === 'income' ? 'var(--good)' : catColor(t.category)),
-          h('span', { class: 'grow left' }, h('span', { class: 'row-title block' }, t.kind === 'income' ? (t.source === 'salary' ? 'Salário' : 'Outra entrada') : TRANSACTION_TITLE[t.category]),
+          h('span', { class: 'grow left' }, h('span', { class: 'row-title block' }, t.kind === 'income' ? (t.source === 'salary' ? 'Salary' : 'Other income') : TRANSACTION_TITLE[t.category]),
             t.note ? h('span', { class: 'caption block' }, t.note) : null),
           h('span', { class: `num strong ${t.kind === 'income' ? 'good' : ''}` }, `${t.kind === 'income' ? '+' : '−'}${money(t.amount, cur)}`)))));
     }
   }
-  return { title: 'Transações', el, back: true, actions: [h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Nova transação', onclick: () => transactionSheet(ctx.today) }, '＋')] };
+  return { title: 'Transactions', el, back: true, actions: [h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'New transaction', onclick: () => transactionSheet(ctx.today) }, '＋')] };
 }
 
-// ── Gastos fixos ─────────────────────────────────────────────────────────────
+// ── Fixed expenses ─────────────────────────────────────────────────────────────
 
 const SUGGESTIONS: { name: string; category: Category }[] = [
-  { name: 'Aluguel', category: 'casa' }, { name: 'Internet', category: 'fixos' }, { name: 'Telemóvel', category: 'fixos' },
-  { name: 'Seguro', category: 'fixos' }, { name: 'Passe', category: 'transporte' },
+  { name: 'Rent', category: 'casa' }, { name: 'Internet', category: 'fixos' }, { name: 'Phone', category: 'fixos' },
+  { name: 'Insurance', category: 'fixos' }, { name: 'Transit pass', category: 'transporte' },
 ];
 
 export function fixedView(ctx: Ctx): View {
@@ -394,23 +394,23 @@ export function fixedView(ctx: Ctx): View {
     if (!group.length) continue;
     el.append(section(CATEGORY_TITLE[c], group.map((f) => h('button', { type: 'button', class: 'row two', onclick: () => fixedSheet(undefined, f) },
       h('span', { class: 'grow left' }, h('span', { class: 'row-title block' }, f.name || CATEGORY_TITLE[c]),
-        f.dueDay > 0 ? h('span', { class: 'caption block' }, `${f.remindOn ? '🔔' : '📅'} vence dia ${f.dueDay}`) : null),
-      h('span', { class: 'num' }, `${money(f.monthly, cur)}/mês`),
+        f.dueDay > 0 ? h('span', { class: 'caption block' }, `${f.remindOn ? '🔔' : '📅'} due on day ${f.dueDay}`) : null),
+      h('span', { class: 'num' }, `${money(f.monthly, cur)}/month`),
       f.dueDay > 0 && f.remindOn ? h('span', {
         class: 'mini', role: 'button', tabindex: 0, onclick: (e: Event) => { e.stopPropagation(); exportBillToCalendar(f, ctx.today, money(f.monthly, cur)); },
-      }, 'Calendário') : null))));
+      }, 'Calendar') : null))));
   }
   const missing = SUGGESTIONS.filter((x) => !s.fixed.some((f) => f.name === x.name));
   if (missing.length) {
-    el.append(section('Sugestões', missing.map((x) => h('button', { type: 'button', class: 'row', onclick: () => fixedSheet(x) },
+    el.append(section('Suggestions', missing.map((x) => h('button', { type: 'button', class: 'row', onclick: () => fixedSheet(x) },
       h('span', { class: 'row-icon' }, '＋'), h('span', { class: 'row-title' }, `${x.name} (${CATEGORY_TITLE[x.category]})`)))));
   }
-  el.append(section(null, [valueRow('Total mensal', money(s.fixed.reduce((a, f) => a + f.monthly, 0), cur))],
-    'Cadastre só os valores mensais. Em renda semanal, o app converte por ×12/52. Para receber aviso no dia do vencimento, use o botão Calendário: ele cria um evento mensal com alerta no app Calendário do iPhone.'));
-  return { title: 'Gastos fixos', el, back: true, actions: [h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Novo gasto fixo', onclick: () => fixedSheet() }, '＋')] };
+  el.append(section(null, [valueRow('Monthly total', money(s.fixed.reduce((a, f) => a + f.monthly, 0), cur))],
+    'Enter monthly amounts only. With weekly income, the app converts by ×12/52. To get an alert on the due date, use the Calendar button: it creates a monthly event with an alert in the iPhone Calendar app.'));
+  return { title: 'Fixed expenses', el, back: true, actions: [h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'New fixed expense', onclick: () => fixedSheet() }, '＋')] };
 }
 
-// ── Metas ────────────────────────────────────────────────────────────────────
+// ── Goals ────────────────────────────────────────────────────────────────────
 
 let reorder = false;
 
@@ -419,38 +419,38 @@ export function goalsView(ctx: Ctx): View {
   const m = makeFinanceModel(s, ctx.today);
   const toMove = m.goals.reduce((a, r) => a + r.toMove, 0);
   const $ = (c: number) => money(c, m.currency);
-  const noun = s.settings.frequency === 'weekly' ? 'semana' : 'mês';
+  const noun = s.settings.frequency === 'weekly' ? 'week' : 'month';
   const el = h('div', { class: 'page' });
 
   el.append(h('section', { class: 'group' }, h('div', { class: 'card summary' },
-    h('span', { class: 'caption' }, `Neste ${noun}`),
-    m.income === 0 ? h('h3', null, 'Lance o salário para ver quanto transferir')
-      : toMove > 0 ? h('h3', null, `Transfira ${$(toMove)} para as metas`) : h('h3', { class: 'good' }, '✓ Tudo transferido'),
-    h('p', { class: 'caption' }, 'Cada meta tem a sua conta: transfira direto para ela. Toque no círculo quando transferir.'),
+    h('span', { class: 'caption' }, `This ${noun}`),
+    m.income === 0 ? h('h3', null, 'Log your salary to see how much to transfer')
+      : toMove > 0 ? h('h3', null, `Transfer ${$(toMove)} to your goals`) : h('h3', { class: 'good' }, '✓ All transferred'),
+    h('p', { class: 'caption' }, 'Each goal has its own account: transfer straight to it. Tap the circle once you do.'),
     m.income > 0 && !m.savingsCheck.isEnough ? savingsWarning(m) : null)));
 
-  if (m.goals.length === 0) el.append(emptyState('🎯', 'Sem metas', 'Toque em ＋ para criar a primeira.'));
+  if (m.goals.length === 0) el.append(emptyState('🎯', 'No goals', 'Tap ＋ to create the first.'));
   else {
     const ids = m.goals.map((r) => r.goal.id);
-    el.append(section('Suas metas', m.goals.map((r, i) => {
+    el.append(section('Your goals', m.goals.map((r, i) => {
       const st = r.status;
-      const headline = st.isComplete ? 'concluída' : r.isDone ? `transferido ${$(r.transferred)}` : r.toMove > 0 ? `transfira ${$(r.toMove)}` : 'nada agora';
+      const headline = st.isComplete ? 'completed' : r.isDone ? `transferred ${$(r.transferred)}` : r.toMove > 0 ? `transfer ${$(r.toMove)}` : 'nothing now';
       return h('div', { class: 'row two' },
-        reorder ? null : h('button', { type: 'button', class: 'check-btn', disabled: r.allocation === 0, 'aria-label': r.isDone ? 'Desfazer' : 'Marcar como transferido', onclick: () => void goalTap(r, m) }, checkCircle(r.isDone, goalColor(i))),
+        reorder ? null : h('button', { type: 'button', class: 'check-btn', disabled: r.allocation === 0, 'aria-label': r.isDone ? 'Undo' : 'Mark as transferred', onclick: () => void goalTap(r, m) }, checkCircle(r.isDone, goalColor(i))),
         h('a', { class: 'grow', href: hrefTo(FINANCE, 'goal', r.goal.id) },
           h('div', { class: 'row-head' }, h('span', { class: 'row-title' }, r.goal.name), h('span', { class: `num strong ${r.toMove > 0 ? '' : 'muted'}` }, headline)),
           bar(st.progress, goalColor(i)),
-          h('div', { class: `caption num ${st.isOverdue && !st.isComplete ? 'bad' : ''}` }, st.isComplete ? `Meta concluída · ${$(st.saved)}` : `${$(st.saved)} de ${$(st.target)} · até ${fmtFull(r.goal.deadline)}`)),
+          h('div', { class: `caption num ${st.isOverdue && !st.isComplete ? 'bad' : ''}` }, st.isComplete ? `Goal completed · ${$(st.saved)}` : `${$(st.saved)} of ${$(st.target)} · by ${fmtFull(r.goal.deadline)}`)),
         reorder ? h('span', { class: 'reorder' },
-          h('button', { type: 'button', 'aria-label': 'Subir', disabled: i === 0, onclick: () => move(ids, i, -1) }, '▲'),
-          h('button', { type: 'button', 'aria-label': 'Descer', disabled: i === ids.length - 1, onclick: () => move(ids, i, 1) }, '▼')) : null);
-    }), m.goals.length > 1 ? 'A de cima recebe primeiro. Toque em Ordenar para mudar.' : undefined));
+          h('button', { type: 'button', 'aria-label': 'Move up', disabled: i === 0, onclick: () => move(ids, i, -1) }, '▲'),
+          h('button', { type: 'button', 'aria-label': 'Move down', disabled: i === ids.length - 1, onclick: () => move(ids, i, 1) }, '▼')) : null);
+    }), m.goals.length > 1 ? 'The top one is funded first. Tap Reorder to change.' : undefined));
   }
   return {
-    title: 'Metas', el, back: true,
+    title: 'Goals', el, back: true,
     actions: [
-      m.goals.length > 1 ? h('button', { type: 'button', class: 'text-btn', onclick: () => { reorder = !reorder; window.dispatchEvent(new Event('vida:rerender')); } }, reorder ? 'Pronto' : 'Ordenar') : null,
-      h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Nova meta', onclick: () => goalSheet(ctx.today) }, '＋'),
+      m.goals.length > 1 ? h('button', { type: 'button', class: 'text-btn', onclick: () => { reorder = !reorder; window.dispatchEvent(new Event('vida:rerender')); } }, reorder ? 'Done' : 'Reorder') : null,
+      h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'New goal', onclick: () => goalSheet(ctx.today) }, '＋'),
     ].filter((x): x is HTMLButtonElement => x !== null),
   };
 }
@@ -466,121 +466,121 @@ function move(ids: string[], i: number, by: number): void {
 export function goalDetailView(ctx: Ctx): View {
   const s = store.state;
   const goal = s.goals.find((g) => g.id === ctx.path[1]);
-  if (!goal) return { title: 'Meta', el: h('div', { class: 'page' }, emptyState('🎯', 'Meta não encontrada', 'Ela pode ter sido apagada.')), back: true };
+  if (!goal) return { title: 'Goal', el: h('div', { class: 'page' }, emptyState('🎯', 'Goal not found', 'It may have been deleted.')), back: true };
   const cur = s.settings.currency;
   const saved = s.contributions.filter((c) => c.goalId === goal.id).reduce((a, c) => a + c.amount, 0);
   const items = s.contributions.filter((c) => c.goalId === goal.id).sort((a, b) => b.day - a.day);
   const curve = cumulative(items);
   const el = h('div', { class: 'page' },
-    section(null, [valueRow('Guardado', money(saved, cur), 'good'), valueRow('Alvo', money(goal.target, cur)), valueRow('Prazo', fmtFull(goal.deadline))]),
-    curve.length > 1 ? section('📈 Evolução', [h('div', { class: 'chart-card' }, areaChart({
+    section(null, [valueRow('Saved', money(saved, cur), 'good'), valueRow('Target', money(goal.target, cur)), valueRow('Deadline', fmtFull(goal.deadline))]),
+    curve.length > 1 ? section('📈 Progress', [h('div', { class: 'chart-card' }, areaChart({
       points: curve.map((c) => ({ label: fmtShort(c.day), value: c.total })),
-      cap: goal.target, capLabel: 'Alvo', valueLabel: 'Guardado', fmt: (c) => money(c, cur), initial: curve.length - 1, ariaLabel: 'Evolução do valor guardado',
-    }))], `${Math.round(Math.min(1, saved / Math.max(1, goal.target)) * 100)}% do alvo.`) : null,
-    section('Aportes', items.length ? items.map((c) => h('div', { class: 'row two' },
+      cap: goal.target, capLabel: 'Target', valueLabel: 'Saved', fmt: (c) => money(c, cur), initial: curve.length - 1, ariaLabel: 'Progress of the saved amount',
+    }))], `${Math.round(Math.min(1, saved / Math.max(1, goal.target)) * 100)}% of the target.`) : null,
+    section('Contributions', items.length ? items.map((c) => h('div', { class: 'row two' },
       h('button', { type: 'button', class: 'grow left', onclick: () => contributionSheet(goal, ctx.today, { existingId: c.id }) },
         h('span', { class: 'row-title block' }, fmtFull(c.day)), c.note ? h('span', { class: 'caption block' }, c.note) : null),
       h('span', { class: 'num' }, money(c.amount, cur)),
-      h('button', { type: 'button', class: 'mini', 'aria-label': 'Apagar aporte', onclick: async () => {
-        if (await confirmDialog('Apagar este aporte?', '', 'Apagar', true)) store.update((st) => { st.contributions = st.contributions.filter((x) => x.id !== c.id); });
+      h('button', { type: 'button', class: 'mini', 'aria-label': 'Delete contribution', onclick: async () => {
+        if (await confirmDialog('Delete this contribution?', '', 'Delete', true)) store.update((st) => { st.contributions = st.contributions.filter((x) => x.id !== c.id); });
       } }, '✕')))
-      : [h('div', { class: 'row muted' }, 'Nenhum aporte ainda')]),
-    h('div', { class: 'stack center' }, button('Novo aporte', () => contributionSheet(goal, ctx.today), 'primary'),
-      button('Apagar meta', async () => {
-        if (await confirmDialog('Apagar esta meta?', 'Os aportes dela também serão apagados.', 'Apagar', true)) { deleteGoal(goal.id); history.back(); }
+      : [h('div', { class: 'row muted' }, 'No contributions yet')]),
+    h('div', { class: 'stack center' }, button('New contribution', () => contributionSheet(goal, ctx.today), 'primary'),
+      button('Delete goal', async () => {
+        if (await confirmDialog('Delete this goal?', 'Its contributions are deleted too.', 'Delete', true)) { deleteGoal(goal.id); history.back(); }
       }, 'danger')));
-  return { title: goal.name, el, back: true, actions: [h('button', { type: 'button', class: 'text-btn', onclick: () => goalSheet(ctx.today, goal) }, 'Editar')] };
+  return { title: goal.name, el, back: true, actions: [h('button', { type: 'button', class: 'text-btn', onclick: () => goalSheet(ctx.today, goal) }, 'Edit')] };
 }
 
-// ── Histórico ────────────────────────────────────────────────────────────────
+// ── History ────────────────────────────────────────────────────────────────
 
 export function historyView(): View {
   const s = store.state;
   const el = h('div', { class: 'page' });
-  if (!s.snapshots.length) el.append(emptyState('🕘', 'Histórico vazio', 'Use "Salvar no histórico" em Finanças.'));
+  if (!s.snapshots.length) el.append(emptyState('🕘', 'History is empty', 'Use "Save to history" in Finance.'));
   else {
     const recent = [...s.snapshots].sort((a, b) => a.periodStart - b.periodStart).slice(-8);
     const cur = recent[recent.length - 1]?.currency ?? s.settings.currency;
-    el.append(section('📊 Entrada × gasto', [h('div', { class: 'chart-card' }, barChart({
+    el.append(section('📊 Income × spending', [h('div', { class: 'chart-card' }, barChart({
       groups: recent.map((x) => ({ id: x.id, label: fmtShort(x.periodStart), a: x.income, b: x.totalSpent })),
-      aLabel: 'Renda', bLabel: 'Gasto', fmt: (c) => money(c, cur), ariaLabel: 'Renda e gasto por período',
+      aLabel: 'Income', bLabel: 'Spent', fmt: (c) => money(c, cur), ariaLabel: 'Income and spending per period',
       onOpen: (id) => { location.hash = hrefTo(FINANCE, 'history', id); },
-    }))], recent.length > 1 ? 'Toque numa barra para ler os valores e abrir o período.' : 'Salve mais períodos para comparar.'));
-    el.append(section('Períodos salvos', s.snapshots.map((x) => h('a', { class: 'row link-row', href: hrefTo(FINANCE, 'history', x.id) },
+    }))], recent.length > 1 ? 'Tap a bar to read the values and open the period.' : 'Save more periods to compare.'));
+    el.append(section('Saved periods', s.snapshots.map((x) => h('a', { class: 'row link-row', href: hrefTo(FINANCE, 'history', x.id) },
       h('span', { class: 'grow' }, h('span', { class: 'row-title block' }, fmtPeriod({ start: x.periodStart, end: x.periodEnd })),
-        h('span', { class: 'caption block' }, `${presetById(x.preset).title} · guardar ${money(x.savingsPlanned, x.currency)}`),
-        h('span', { class: 'caption block faint' }, `Salvo em ${fmtStamp(x.savedAt)}`)), h('span', { class: 'chev' }, '›')))));
+        h('span', { class: 'caption block' }, `${presetById(x.preset).title} · save ${money(x.savingsPlanned, x.currency)}`),
+        h('span', { class: 'caption block faint' }, `Saved on ${fmtStamp(x.savedAt)}`)), h('span', { class: 'chev' }, '›')))));
   }
-  return { title: 'Histórico', el, back: true };
+  return { title: 'History', el, back: true };
 }
 
 export function historyDetailView(ctx: Ctx): View {
   const x = store.state.snapshots.find((n) => n.id === ctx.path[1]);
-  if (!x) return { title: 'Detalhe', el: h('div', { class: 'page' }, emptyState('🕘', 'Não encontrado', 'Esse registro foi apagado.')), back: true };
+  if (!x) return { title: 'Details', el: h('div', { class: 'page' }, emptyState('🕘', 'Not found', 'This record was deleted.')), back: true };
   const $ = (c: number) => money(c, x.currency);
   const el = h('div', { class: 'page' },
-    section('Período', [
-      valueRow('Datas', fmtPeriod({ start: x.periodStart, end: x.periodEnd })), valueRow('Renda', $(x.income)), valueRow('Plano', presetById(x.preset).title),
-      valueRow('Poupança planejada', $(x.savingsPlanned), 'good'), valueRow('Fixos', $(x.totalFixed)), valueRow('Livre', $(x.free)),
-      valueRow('Gasto real', $(x.totalSpent)), valueRow('Entradas lançadas', $(x.incomeLogged))]),
-    section('Linhas', x.lines.map((l) => h('div', { class: 'row two' },
+    section('Period', [
+      valueRow('Dates', fmtPeriod({ start: x.periodStart, end: x.periodEnd })), valueRow('Income', $(x.income)), valueRow('Plan', presetById(x.preset).title),
+      valueRow('Planned savings', $(x.savingsPlanned), 'good'), valueRow('Fixed', $(x.totalFixed)), valueRow('Free', $(x.free)),
+      valueRow('Actual spending', $(x.totalSpent)), valueRow('Income logged', $(x.incomeLogged))]),
+    section('Lines', x.lines.map((l) => h('div', { class: 'row two' },
       h('div', { class: 'grow' }, h('div', { class: 'row-head' }, h('span', { class: 'row-title' }, CATEGORY_TITLE[l.category]),
         h('span', { class: `num ${Math.max(l.spent, l.fixed) > l.target ? 'bad' : 'muted'}` }, `${$(l.spent)} / ${$(l.target)}`)),
-        h('div', { class: 'row-foot caption' }, h('span', null, l.fixed > 0 ? `Fixos ${$(l.fixed)}` : ''), h('span', { class: 'warn' }, l.adjusted !== null && l.adjusted !== l.target ? `Ajustado ${$(l.adjusted)}` : ''))))))
+        h('div', { class: 'row-foot caption' }, h('span', null, l.fixed > 0 ? `Fixed ${$(l.fixed)}` : ''), h('span', { class: 'warn' }, l.adjusted !== null && l.adjusted !== l.target ? `Adjusted ${$(l.adjusted)}` : ''))))))
   );
   if (x.goals.length) {
-    el.append(section('Metas', x.goals.map((g) => h('div', { class: 'row two' }, h('div', { class: 'grow' },
+    el.append(section('Goals', x.goals.map((g) => h('div', { class: 'row two' }, h('div', { class: 'grow' },
       h('div', { class: 'row-head' }, h('span', { class: 'row-title' }, g.name), h('span', { class: 'num' }, `${$(g.saved)} / ${$(g.target)}`)),
-      h('div', { class: 'caption' }, `Exigido no período ${$(g.requiredThisPeriod)} · aportado ${$(g.contributedThisPeriod)}`))))));
+      h('div', { class: 'caption' }, `Required this period ${$(g.requiredThisPeriod)} · contributed ${$(g.contributedThisPeriod)}`))))));
   }
-  el.append(h('div', { class: 'center' }, button('Apagar do histórico', async () => {
-    if (await confirmDialog('Apagar este registro?', '', 'Apagar', true)) { store.update((s) => { s.snapshots = s.snapshots.filter((n) => n.id !== x.id); }); history.back(); }
+  el.append(h('div', { class: 'center' }, button('Delete from history', async () => {
+    if (await confirmDialog('Delete this record?', '', 'Delete', true)) { store.update((s) => { s.snapshots = s.snapshots.filter((n) => n.id !== x.id); }); history.back(); }
   }, 'danger')));
   return { title: 'Detalhe', el, back: true };
 }
 
-// ── Adaptação ────────────────────────────────────────────────────────────────
+// ── Adaptation ────────────────────────────────────────────────────────────────
 
 export function adaptationView(ctx: Ctx): View {
   const s = store.state;
   const m = makeFinanceModel(s, ctx.today);
   const a = m.adaptation;
-  if (!a) return { title: 'Orçamento ajustado', el: h('div', { class: 'page' }, emptyState('🎚️', 'Adaptação desligada', 'Ligue em Configurações › Adaptar plano para bater a meta.')), back: true };
+  if (!a) return { title: 'Adjusted budget', el: h('div', { class: 'page' }, emptyState('🎚️', 'Adaptation is off', 'Turn it on in Settings › Adapt plan to hit the goal.')), back: true };
   const $ = (c: number) => money(c, m.currency);
   const cmp = (title: string, original: number, adjusted: number) => h('div', { class: 'row cmp' },
     h('span', { class: 'grow' }, title), h('span', { class: 'num muted' }, $(original)),
     h('span', { class: `num ${adjusted < original ? 'warn' : adjusted > original ? 'bad' : ''}` }, $(adjusted)));
   const el = h('div', { class: 'page' },
-    section(null, [valueRow('Pode gastar por dia', $(a.dailyAllowance), 'accent'), valueRow('Dias até o pagamento', String(m.daysLeft)), a.isNeeded ? valueRow('A compensar', $(a.need)) : null],
-      a.isNeeded ? 'Restante das categorias flexíveis dividido pelos dias que faltam.' : 'Nenhuma categoria passou do alvo. Nada foi ajustado.'),
-    section('Original × ajustado', [h('div', { class: 'row cmp head caption' }, h('span', { class: 'grow' }, 'Categoria'), h('span', null, 'Original'), h('span', null, 'Ajustado')),
-      ...a.lines.map((l) => cmp(CATEGORY_TITLE[l.category], l.original, l.adjusted)), cmp('Poupança', a.originalSavings, a.adjustedSavings)],
-    `Piso protegido das metas: ${$(a.savingsFloor)}. Casa e Gastos fixos não são cortados.`));
+    section(null, [valueRow('Can spend per day', $(a.dailyAllowance), 'accent'), valueRow('Days until payday', String(m.daysLeft)), a.isNeeded ? valueRow('To make up', $(a.need)) : null],
+      a.isNeeded ? 'Remaining flexible categories divided by the days left.' : 'No category went over its target. Nothing was adjusted.'),
+    section('Original × adjusted', [h('div', { class: 'row cmp head caption' }, h('span', { class: 'grow' }, 'Category'), h('span', null, 'Original'), h('span', null, 'Adjusted')),
+      ...a.lines.map((l) => cmp(CATEGORY_TITLE[l.category], l.original, l.adjusted)), cmp('Savings', a.originalSavings, a.adjustedSavings)],
+    `Protected goal floor: ${$(a.savingsFloor)}. Home and Fixed expenses are not cut.`));
   if (!a.isFeasible) {
-    const rows: Node[] = [h('p', { class: 'row bad' }, `⚠️ Mesmo cortando tudo que é flexível, faltam ${$(a.shortfall)} para cumprir a meta neste período.`)];
-    if (m.shortfallAccepted) rows.push(h('p', { class: 'row muted' }, '✓ Atraso aceito neste período'));
+    const rows: Node[] = [h('p', { class: 'row bad' }, `⚠️ Even cutting everything flexible, ${$(a.shortfall)} is still missing to meet the goal this period.`)];
+    if (m.shortfallAccepted) rows.push(h('p', { class: 'row muted' }, '✓ Delay accepted this period'));
     else {
       const next = moreAggressive(presetById(s.settings.preset));
-      if (next) rows.push(h('div', { class: 'row' }, button(`Trocar para ${next.title}`, async () => {
-        if (await confirmDialog(`Trocar o plano para ${next.title}?`, '', 'Confirmar')) store.update((st) => { st.settings.preset = next.id; });
+      if (next) rows.push(h('div', { class: 'row' }, button(`Switch to ${next.title}`, async () => {
+        if (await confirmDialog(`Switch the plan to ${next.title}?`, '', 'Confirm')) store.update((st) => { st.settings.preset = next.id; });
       })));
       for (const r of [...m.goals].reverse()) {
         const st = r.status;
         const date = extendedDeadline(Math.max(0, st.target - (st.saved - st.contributedThisPeriod)), st.requiredThisPeriod, a.shortfall, m.period, m.schedule);
         if (date !== null) {
-          rows.push(h('div', { class: 'row' }, button(`Estender ${r.goal.name} até ${fmtFull(date)}`, async () => {
-            if (await confirmDialog(`Estender o prazo de ${r.goal.name} para ${fmtFull(date)}?`, '', 'Confirmar')) store.update((state) => { const g = state.goals.find((x) => x.id === r.goal.id); if (g) g.deadline = date; });
+          rows.push(h('div', { class: 'row' }, button(`Extend ${r.goal.name} to ${fmtFull(date)}`, async () => {
+            if (await confirmDialog(`Extend the deadline of ${r.goal.name} to ${fmtFull(date)}?`, '', 'Confirm')) store.update((state) => { const g = state.goals.find((x) => x.id === r.goal.id); if (g) g.deadline = date; });
           })));
           break;
         }
       }
-      rows.push(h('div', { class: 'row' }, button('Aceitar o atraso', async () => {
-        if (await confirmDialog('Aceitar que a meta atrase neste período?', '', 'Aceitar')) store.update((st) => { st.settings.acceptedShortfallPeriodStart = m.period.start; });
+      rows.push(h('div', { class: 'row' }, button('Accept the delay', async () => {
+        if (await confirmDialog('Accept that the goal falls behind this period?', '', 'Accept')) store.update((st) => { st.settings.acceptedShortfallPeriodStart = m.period.start; });
       })));
     }
-    el.append(section('Não fecha', rows, 'Nada muda sem a sua confirmação.'));
+    el.append(section('Does not add up', rows, 'Nothing changes without your confirmation.'));
   }
-  return { title: 'Orçamento ajustado', el, back: true };
+  return { title: 'Adjusted budget', el, back: true };
 }
 
 export { openSheet };

@@ -2,15 +2,15 @@ export type Currency = 'EUR' | 'BRL' | 'USD' | 'GBP';
 
 export const CURRENCIES: { code: Currency; title: string }[] = [
   { code: 'EUR', title: 'Euro (€)' },
-  { code: 'BRL', title: 'Real (R$)' },
-  { code: 'USD', title: 'Dólar (US$)' },
-  { code: 'GBP', title: 'Libra (£)' },
+  { code: 'BRL', title: 'Brazilian real (R$)' },
+  { code: 'USD', title: 'US dollar ($)' },
+  { code: 'GBP', title: 'British pound (£)' },
 ];
 
-/** Idioma das telas: o do aparelho se for português, senão pt-PT. */
+/** Language of the screens: the device's if it is English, otherwise en-GB. */
 export const locale: string = (() => {
-  const l = typeof navigator !== 'undefined' ? navigator.language : 'pt-PT';
-  return l.toLowerCase().startsWith('pt') ? l : 'pt-PT';
+  const l = typeof navigator !== 'undefined' ? navigator.language : 'en-GB';
+  return l.toLowerCase().startsWith('en') ? l : 'en-GB';
 })();
 
 const formatters = new Map<Currency, Intl.NumberFormat>();
@@ -26,7 +26,7 @@ export function formatMoney(cents: number, currency: Currency): string {
 }
 
 /** Texto editável sem símbolo, ex.: 1250 → "12,50". */
-export function plainMoney(cents: number, decimal = ','): string {
+export function plainMoney(cents: number, decimal = '.'): string {
   const sign = cents < 0 ? '-' : '';
   const v = Math.abs(cents);
   const frac = v % 100;

@@ -57,7 +57,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the layers and the reasonin
 
 ## Tests
 
-**75 Swift tests** (iOS) and **88 Vitest tests** (web) cover the calculation rules: pay periods, budgeting, goals, adaptation, account split, due dates, rolling leftover and agenda. CI runs both on every push.
+**77 Swift tests** (iOS) and **93 Vitest tests** (web) cover the calculation rules: pay periods, budgeting, goals, adaptation, account split, due dates, rolling leftover and agenda. CI runs both on every push.
 
 ```sh
 cd ios && xcodegen generate

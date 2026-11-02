@@ -10,12 +10,12 @@ The business decisions behind the app. Each one has tests in `VidaTests`.
 - Weekdays follow ISO (1 = Monday … 7 = Sunday); times of day are minutes since midnight.
 
 ## Plan
-- Five split presets (Balanced 50/30/20, More leisure, Saver 30%, Aggressive 40%, Extreme 50%).
-- "Other" takes `outroPoints` (default 5) from the Leisure percentage, capped at Leisure itself.
+- Five split presets (Balanced 50/30/20, More flexible, Saver 30%, Aggressive 40%, Extreme 50%).
+- "Other" is the single flexible everyday category (the old Leisure and Other were merged; stored "lazer" values are read as "outro").
 - Effective spending of a category = `max(actual, fixed)`: a fixed bill not yet logged already counts.
 
 ## Where the salary goes
-- **Spending account:** the chosen categories (default Food, Transport, Leisure, Other).
+- **Spending account:** the chosen categories (default Food, Transport, Other).
 - **Savings:** the rest (Housing, Fixed bills) plus the **Reserve**, which is whatever is left of the savings share after goals.
 - **Each goal's own account:** the part of the savings share assigned to the goal, by priority, transferred directly and never passing through savings.
 - All slices add up to the salary.
@@ -35,7 +35,7 @@ The business decisions behind the app. Each one has tests in `VidaTests`.
 
 ## Spending-account leftover
 - Accumulated balance of (salary share for spending − used) over all earlier periods, from the first logged salary.
-- Leftover adds to Leisure (or the first category in the spending account). Overspend is deducted in the order Leisure, Other, Food, Transport, never leaving a target negative.
+- Leftover adds to Other (or the first category in the spending account). Overspend is deducted in the order Other, Food, Transport, never leaving a target negative.
 - "Reset" restarts the count at the current period and asks for confirmation.
 
 ## Automatic adaptation

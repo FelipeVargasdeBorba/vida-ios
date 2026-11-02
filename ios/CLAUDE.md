@@ -1,6 +1,6 @@
 # Vida — regras do projeto
 
-App nativo de iPhone (iOS 17+, só iPhone) em SwiftUI + SwiftData, interface em português. Prioridade: funcional, minimalista, rápido.
+App nativo de iPhone (iOS 17+, só iPhone) em SwiftUI + SwiftData, interface em inglês. Prioridade: funcional, minimalista, rápido.
 
 ## Build
 - Projeto gerado pelo XcodeGen: edite `project.yml`, nunca o `.xcodeproj` (ele é descartável e não vai para o git).
@@ -28,14 +28,15 @@ App nativo de iPhone (iOS 17+, só iPhone) em SwiftUI + SwiftData, interface em 
 
 ## Decisões de produto
 - Renda do período = soma das entradas com origem **Salário** lançadas no período (`BudgetCalculator.periodIncome`). "Outra entrada" não muda o plano. `FinanceSettings.incomeCents` ficou sem uso, mas continua no modelo para não perder dados.
-- "Outro" tira `outroPoints` (padrão 5) do % de Lazer; limitado ao próprio Lazer.
+- "Outro" é a única categoria flexível do dia a dia: Lazer e Outro foram unidos. Dados antigos com `lazer` são lidos como `outro` (`BudgetCategory.stored`); `FinanceSettings.outroPoints` ficou sem uso, mas continua no modelo para não perder dados.
+- Idioma: a interface é em inglês. Os valores guardados (`casa`, `alimentacao`, `outro`…, notas de aporte) continuam em português para não quebrar dados antigos.
 - Gasto efetivo de uma categoria = `max(real, fixos)` (fixo ainda não lançado já conta).
 - Exigido da meta no período = (alvo − guardado antes do período) ÷ períodos que começam antes do prazo; fica fixo durante o período.
 - Adaptação: corta flexíveis na ordem configurada até `max(gasto, mínimo)`; depois usa só a poupança **acima** do piso exigido pelas metas. Piso, Casa e Fixos nunca são cortados.
-- Divisão no banco: as categorias em `spendingAccount` (padrão Alimentação, Transporte, Lazer, Outro) ficam na conta de gastos; o resto vai para saves. A poupança sai da conta de gastos: cada meta tem a **sua própria conta** e recebe a sua parte (`GoalRow.allocation`, por prioridade) direto, sem passar por saves. O que sobrar vira Reserva em saves. Os valores são os alvos do plano, e a soma das fatias bate com a renda.
+- Divisão no banco: as categorias em `spendingAccount` (padrão Alimentação, Transporte, Outro) ficam na conta de gastos; o resto vai para saves. A poupança sai da conta de gastos: cada meta tem a **sua própria conta** e recebe a sua parte (`GoalRow.allocation`, por prioridade) direto, sem passar por saves. O que sobrar vira Reserva em saves. Os valores são os alvos do plano, e a soma das fatias bate com a renda.
 - Carteira saves: saldo informado (`savesBalanceCents`) + o que entra em saves (sem as metas) − contas pagas de saves = quanto fica depois do período.
 - Checklist do período (topo de Finanças): "Separar para saves" (`PeriodCheck` `.savesTransfer`, `forDate` = início do período), cada gasto fixo (`PeriodCheck` `.bill` ligado ao `FixedExpense`, `forDate` = vencimento de `BillCalculator.occurrence`) e cada meta com parte no plano (marcar cria um `GoalContribution` com nota `ChecklistActions.goalNote`; desmarcar apaga só esses). Marcar uma conta não lança gasto, porque os fixos já contam no plano.
 - Vencimento de fixo: `dueDay` (0 = sem data), ajustado ao fim do mês. Mensal: a ocorrência dentro do período. Semanal: a do mês em que o período começa. O lembrete (`remindOn`) toca no dia, na hora dos lembretes (`reminderMinutes`), e não toca se a conta já estiver paga.
 - Metas mostram só quanto colocar: `GoalRow.toMove` = parte do plano (`allocation`) − aportado no período.
-- Sobra da conta de gastos (`CarryOverCalculator`): saldo acumulado de (parte do salário para gastos − usado) de todos os períodos anteriores, desde o primeiro salário lançado depois de `carryFromDate`. "Usado" = `max(real, fixos)` nos períodos com salário. Sobra soma em Lazer (ou na primeira de Lazer, Outro, Alimentação, Transporte que estiver na conta de gastos). Falta é descontada nessa ordem, sem alvo negativo. Saves não muda. "Zerar" (com confirmação) põe `carryFromDate` no início do período.
+- Sobra da conta de gastos (`CarryOverCalculator`): saldo acumulado de (parte do salário para gastos − usado) de todos os períodos anteriores, desde o primeiro salário lançado depois de `carryFromDate`. "Usado" = `max(real, fixos)` nos períodos com salário. Sobra soma em Outro (ou na primeira de Outro, Alimentação, Transporte que estiver na conta de gastos). Falta é descontada nessa ordem, sem alvo negativo. Saves não muda. "Zerar" (com confirmação) põe `carryFromDate` no início do período.
 - Transferência para a meta: ao marcar a meta (checklist ou tela de Metas) abre o aporte com o valor do plano sugerido, editável. O que vale é o valor transferido de fato: `GoalRow.effectiveAllocation = max(plano, transferido)` alimenta a divisão (a diferença sai da Reserva) e `toMove` mostra o que falta se transferiu menos. A exigência do período fica fixa; no período seguinte ela cai sozinha, porque o guardado antes do período já inclui o valor real.

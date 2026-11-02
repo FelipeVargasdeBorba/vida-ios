@@ -3,14 +3,14 @@ import { splitAccounts, wallet } from '../src/domain/accountSplit';
 import { DEFAULT_SPENDING_ACCOUNT, type PresetId, percentsFor, presetById, PRESETS, split } from '../src/domain/budget';
 
 const defaults = new Set(DEFAULT_SPENDING_ACCOUNT);
-const targets = (income: number, preset: PresetId = 'balanced', outro = 5) => split(income, percentsFor(presetById(preset), outro));
+const targets = (income: number, preset: PresetId = 'balanced') => split(income, percentsFor(presetById(preset)));
 const kinds = (xs: { kind: { type: string } }[]) => xs.map((x) => x.kind.type);
 
 describe('divisão entre contas', () => {
   it('o dia a dia fica na conta de gastos', () => {
     const s = splitAccounts(targets(200_000), defaults, []);
     expect(s.spending.map((x) => (x.kind.type === 'category' ? x.kind.category : x.kind.type)))
-      .toEqual(['alimentacao', 'transporte', 'lazer', 'outro']);
+      .toEqual(['alimentacao', 'transporte', 'outro']);
     expect(s.spendingTotal).toBe(94_000);
     expect(s.saves.map((x) => (x.kind.type === 'category' ? x.kind.category : x.kind.type))).toEqual(['casa', 'fixos', 'reserve']);
     expect(s.savesTotal).toBe(106_000);
@@ -54,14 +54,14 @@ describe('divisão entre contas', () => {
   });
 
   it('categoria movida para saves', () => {
-    const s = splitAccounts(targets(200_000), new Set(['alimentacao', 'lazer', 'outro'] as const), []);
+    const s = splitAccounts(targets(200_000), new Set(['alimentacao', 'outro'] as const), []);
     expect(s.spending.some((x) => x.kind.type === 'category' && x.kind.category === 'transporte')).toBe(false);
     expect(s.saves.some((x) => x.kind.type === 'category' && x.kind.category === 'transporte')).toBe(true);
   });
 
   it('alvos zerados ficam de fora', () => {
     const s = splitAccounts(targets(200_000, 'extreme50'), defaults, []);
-    expect(s.all.some((x) => x.kind.type === 'category' && x.kind.category === 'lazer')).toBe(false);
+    expect(s.all.some((x) => x.kind.type === 'category' && x.kind.category === 'outro')).toBe(true);
   });
 
   it('carteira de saves', () => {

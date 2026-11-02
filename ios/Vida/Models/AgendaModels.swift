@@ -66,7 +66,7 @@ final class AgendaItem {
             return "\(oneTimeDate.formatted(.dateTime.day().month(.abbreviated).year().locale(Money.locale))) · \(time)"
         }
         let days = (1...7).filter { weekdaysMask & (1 << ($0 - 1)) != 0 }
-        let daysText = days.count == 7 ? "Todos os dias" : (days.isEmpty ? "Nenhum dia" : days.map { Weekday.short[$0 - 1] }.joined(separator: ", "))
+        let daysText = days.count == 7 ? "Every day" : (days.isEmpty ? "No days" : days.map { Weekday.short[$0 - 1] }.joined(separator: ", "))
         return "\(daysText) · \(time)"
     }
 }

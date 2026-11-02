@@ -4,14 +4,14 @@ import XCTest
 final class AccountSplitTests: XCTestCase {
     private let defaults = Set(AccountSplitCalculator.defaultSpendingCategories)
 
-    private func targets(_ income: Int, _ preset: BudgetPreset = .balanced, outro: Int = 5) -> [BudgetCategory: Int] {
-        BudgetCalculator.split(incomeCents: income, percents: preset.percents(outroPoints: outro))
+    private func targets(_ income: Int, _ preset: BudgetPreset = .balanced) -> [BudgetCategory: Int] {
+        BudgetCalculator.split(incomeCents: income, percents: preset.percents)
     }
 
     func testDailyCategoriesStayInSpendingAccount() {
         let s = AccountSplitCalculator.split(targets: targets(200_000), spendingCategories: defaults, goals: [])
-        XCTAssertEqual(s.spending.map(\.kind), [.category(.alimentacao), .category(.transporte), .category(.lazer), .category(.outro)])
-        // Alimentação 12 + Transporte 5 + Lazer 25 + Outro 5 = 47%.
+        XCTAssertEqual(s.spending.map(\.kind), [.category(.alimentacao), .category(.transporte), .category(.outro)])
+        // Alimentação 12 + Transporte 5 + Outro 30 = 47%.
         XCTAssertEqual(s.spendingTotal, 94_000)
         XCTAssertEqual(s.saves.map(\.kind), [.category(.casa), .category(.fixos), .reserve])
         XCTAssertEqual(s.savesTotal, 106_000)
@@ -60,14 +60,14 @@ final class AccountSplitTests: XCTestCase {
     }
 
     func testCategoryMovedToSavesAccount() {
-        let s = AccountSplitCalculator.split(targets: targets(200_000), spendingCategories: [.alimentacao, .lazer, .outro], goals: [])
+        let s = AccountSplitCalculator.split(targets: targets(200_000), spendingCategories: [.alimentacao, .outro], goals: [])
         XCTAssertFalse(s.spending.contains { $0.kind == .category(.transporte) })
         XCTAssertTrue(s.saves.contains { $0.kind == .category(.transporte) })
     }
 
     func testZeroTargetsAreLeftOut() {
-        let s = AccountSplitCalculator.split(targets: targets(200_000, .extreme50, outro: 5), spendingCategories: defaults, goals: [])
-        XCTAssertFalse(s.all.contains { $0.kind == .category(.lazer) })
+        let s = AccountSplitCalculator.split(targets: targets(200_000, .extreme50), spendingCategories: defaults, goals: [])
+        XCTAssertTrue(s.all.contains { $0.kind == .category(.outro) })
     }
 
     func testWalletOverview() {

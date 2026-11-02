@@ -6,29 +6,29 @@ import {
 import { parseCents } from '../src/domain/money';
 
 const sum = (o: Record<string, number>) => Object.values(o).reduce((a, b) => a + b, 0);
-const balanced = (outro: number) => percentsFor(presetById('balanced'), outro);
+const balanced = () => percentsFor(presetById('balanced'));
 
 describe('orçamento', () => {
   it('todos os modelos somam 100', () => {
     for (const p of PRESETS) {
       expect(p.values.reduce((a, b) => a + b, 0)).toBe(100);
-      for (const outro of [0, 5, 50]) expect(sum(percentsFor(p, outro))).toBe(100);
+      expect(sum(percentsFor(p))).toBe(100);
     }
   });
 
-  it('"Outro" sai do Lazer e é limitado a ele', () => {
-    expect(percentsFor(presetById('balanced'), 5)).toMatchObject({ lazer: 25, outro: 5 });
-    expect(percentsFor(presetById('extreme50'), 5)).toMatchObject({ lazer: 0, outro: 4 });
+  it('"Outro" é a única categoria flexível além de alimentação e transporte', () => {
+    expect(percentsFor(presetById('balanced'))).toEqual({ casa: 28, alimentacao: 12, fixos: 5, transporte: 5, outro: 30, poupanca: 20 });
+    expect(percentsFor(presetById('extreme50'))).toMatchObject({ outro: 4, poupanca: 50 });
   });
 
   it('divisão mensal do equilibrado', () => {
-    const t = split(200_000, balanced(0));
-    expect(t).toMatchObject({ casa: 56_000, alimentacao: 24_000, fixos: 10_000, transporte: 10_000, lazer: 60_000, outro: 0, poupanca: 40_000 });
+    const t = split(200_000, balanced());
+    expect(t).toMatchObject({ casa: 56_000, alimentacao: 24_000, fixos: 10_000, transporte: 10_000, outro: 60_000, poupanca: 40_000 });
   });
 
   it('a soma é exata com centavos quebrados', () => {
     for (const income of [100_001, 33_333, 1, 99, 123_457]) {
-      for (const p of PRESETS) expect(sum(split(income, percentsFor(p, 5)))).toBe(income);
+      for (const p of PRESETS) expect(sum(split(income, percentsFor(p)))).toBe(income);
     }
   });
 
@@ -40,7 +40,7 @@ describe('orçamento', () => {
   });
 
   it('resumo mensal e semanal', () => {
-    const p = balanced(0);
+    const p = balanced();
     const m = summarize(200_000, split(200_000, p), { casa: 80_000 }, { alimentacao: 5_000 });
     expect(m.savings).toBe(40_000);
     expect(m.totalFixed).toBe(80_000);

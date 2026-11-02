@@ -49,13 +49,13 @@ final class BillCalculatorTests: XCTestCase {
 
     func testBillReminderFiresOnDueDayUnlessPaid() {
         let now = day(2026, 10, 30, 8)
-        let rent = BillReminder(title: "Aluguel", body: "€700", dueDay: 5, paid: [])
+        let rent = BillReminder(title: "Rent", body: "€700", dueDay: 5, paid: [])
         let plan = NotificationPlanner.plan(rules: [], payday: nil, bills: [rent], paydayMinutes: 540, now: now, calendar: utc)
         XCTAssertEqual(plan.map(\.date), [day(2026, 11, 5, 9)])
-        XCTAssertEqual(plan.first?.title, "Pagar Aluguel")
+        XCTAssertEqual(plan.first?.title, "Pay Rent")
         XCTAssertEqual(plan.first?.action, NotificationPlanner.billAction)
 
-        let paid = BillReminder(title: "Aluguel", body: "€700", dueDay: 5, paid: [day(2026, 11, 5)])
+        let paid = BillReminder(title: "Rent", body: "€700", dueDay: 5, paid: [day(2026, 11, 5)])
         XCTAssertTrue(NotificationPlanner.plan(rules: [], payday: nil, bills: [paid], paydayMinutes: 540, now: now, calendar: utc).isEmpty)
     }
 }

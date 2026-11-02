@@ -1,29 +1,29 @@
 import type { PayFrequency } from './payPeriod';
 
-export type Category = 'casa' | 'fixos' | 'alimentacao' | 'transporte' | 'lazer' | 'outro' | 'poupanca';
+export type Category = 'casa' | 'fixos' | 'alimentacao' | 'transporte' | 'outro' | 'poupanca';
 
 /** Ordem fixa: o desempate do maior resto depende dela. */
-export const ALL_CATEGORIES: Category[] = ['casa', 'fixos', 'alimentacao', 'transporte', 'lazer', 'outro', 'poupanca'];
+export const ALL_CATEGORIES: Category[] = ['casa', 'fixos', 'alimentacao', 'transporte', 'outro', 'poupanca'];
 /** Categorias onde se gasta (tudo menos poupança). */
-export const SPENDING: Category[] = ['casa', 'fixos', 'alimentacao', 'transporte', 'lazer', 'outro'];
+export const SPENDING: Category[] = ['casa', 'fixos', 'alimentacao', 'transporte', 'outro'];
 /** Categorias que podem ser cortadas na adaptação. */
-export const CUTTABLE: Category[] = ['lazer', 'outro', 'transporte', 'alimentacao'];
-export const DEFAULT_FLEXIBLE_ORDER: Category[] = ['lazer', 'outro', 'transporte', 'alimentacao'];
+export const CUTTABLE: Category[] = ['outro', 'transporte', 'alimentacao'];
+export const DEFAULT_FLEXIBLE_ORDER: Category[] = ['outro', 'transporte', 'alimentacao'];
 /** Gastos do dia a dia que costumam ficar na conta de gastos. */
-export const DEFAULT_SPENDING_ACCOUNT: Category[] = ['alimentacao', 'transporte', 'lazer', 'outro'];
+export const DEFAULT_SPENDING_ACCOUNT: Category[] = ['alimentacao', 'transporte', 'outro'];
 
 export const CATEGORY_TITLE: Record<Category, string> = {
-  casa: 'Casa', fixos: 'Gastos fixos', alimentacao: 'Alimentação', transporte: 'Transporte',
-  lazer: 'Lazer', outro: 'Outro', poupanca: 'Poupança',
+  casa: 'Home', fixos: 'Fixed expenses', alimentacao: 'Food', transporte: 'Transport',
+  outro: 'Other', poupanca: 'Savings',
 };
 
 /** Nome no registro de transações. */
 export const TRANSACTION_TITLE: Record<Category, string> = {
-  ...CATEGORY_TITLE, casa: 'Casa/aluguel', lazer: 'Entretenimento',
+  ...CATEGORY_TITLE, casa: 'Home/rent',
 };
 
 export const CATEGORY_ICON: Record<Category, string> = {
-  casa: '🏠', fixos: '📌', alimentacao: '🛒', transporte: '🚆', lazer: '🎭', outro: '⋯', poupanca: '💰',
+  casa: '🏠', fixos: '📌', alimentacao: '🛒', transporte: '🚆', outro: '⋯', poupanca: '💰',
 };
 
 export type PresetId = 'balanced' | 'moreLeisure' | 'saver30' | 'aggressive40' | 'extreme50';
@@ -31,41 +31,32 @@ export type PresetId = 'balanced' | 'moreLeisure' | 'saver30' | 'aggressive40' |
 export interface Preset {
   id: PresetId;
   title: string;
-  /** Casa, Alimentação, Fixos, Transporte, Lazer, Poupança. Cada um soma 100. */
+  /** Casa, Alimentação, Fixos, Transporte, Outro, Poupança. Cada um soma 100. */
   values: [number, number, number, number, number, number];
 }
 
 export const PRESETS: Preset[] = [
-  { id: 'balanced', title: 'Equilibrado 50/30/20', values: [28, 12, 5, 5, 30, 20] },
-  { id: 'moreLeisure', title: 'Mais lazer', values: [35, 13, 5, 7, 30, 10] },
-  { id: 'saver30', title: 'Poupador 30%', values: [30, 12, 8, 5, 15, 30] },
-  { id: 'aggressive40', title: 'Agressivo 40%', values: [30, 12, 8, 5, 5, 40] },
-  { id: 'extreme50', title: 'Extremo 50%', values: [28, 10, 5, 3, 4, 50] },
+  { id: 'balanced', title: 'Balanced 50/30/20', values: [28, 12, 5, 5, 30, 20] },
+  { id: 'moreLeisure', title: 'More flexible', values: [35, 13, 5, 7, 30, 10] },
+  { id: 'saver30', title: 'Saver 30%', values: [30, 12, 8, 5, 15, 30] },
+  { id: 'aggressive40', title: 'Aggressive 40%', values: [30, 12, 8, 5, 5, 40] },
+  { id: 'extreme50', title: 'Extreme 50%', values: [28, 10, 5, 3, 4, 50] },
 ];
 
 export const presetById = (id: PresetId): Preset => PRESETS.find((p) => p.id === id) ?? PRESETS[0]!;
 
 export type Percents = Record<Category, number>;
 
-export function basePercents(p: Preset): Percents {
-  const [casa, alimentacao, fixos, transporte, lazer, poupanca] = p.values;
-  return { casa, alimentacao, fixos, transporte, lazer, outro: 0, poupanca };
-}
-
-/** Percentuais com a fatia de "Outro" tirada do Lazer (limitada ao próprio Lazer). */
-export function percentsFor(p: Preset, outroPoints: number): Percents {
-  const out = basePercents(p);
-  const outro = Math.min(Math.max(0, outroPoints), out.lazer);
-  out.lazer -= outro;
-  out.outro = outro;
-  return out;
+export function percentsFor(p: Preset): Percents {
+  const [casa, alimentacao, fixos, transporte, outro, poupanca] = p.values;
+  return { casa, alimentacao, fixos, transporte, outro, poupanca };
 }
 
 export const savingsPercent = (p: Preset) => p.values[5];
 
 export function presetSummary(p: Preset): string {
-  const [casa, alim, fixos, transp, lazer, poup] = p.values;
-  return `Casa ${casa} · Alim. ${alim} · Fixos ${fixos} · Transp. ${transp} · Lazer ${lazer} · Poup. ${poup}`;
+  const [casa, alim, fixos, transp, outro, poup] = p.values;
+  return `Home ${casa} · Food ${alim} · Fixed ${fixos} · Transport ${transp} · Other ${outro} · Savings ${poup}`;
 }
 
 /** Do que menos poupa para o que mais poupa. */

@@ -1,8 +1,8 @@
 {
   "name": "Vida",
   "short_name": "Vida",
-  "description": "Finanças, agenda e notas. Dados só no seu aparelho.",
-  "lang": "pt-BR",
+  "description": "Finance, agenda and notes. Your data stays on your device.",
+  "lang": "en",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

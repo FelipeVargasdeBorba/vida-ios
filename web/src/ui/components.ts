@@ -126,7 +126,7 @@ export function donut(slices: SplitSlice[], center: HTMLElement, onPick?: (index
     parts.push(arc);
     offset += len;
   }
-  return h('div', { class: 'donut' }, svg('svg', { viewBox: '0 0 200 200', role: 'img', 'aria-label': 'Divisão do salário' }, ...parts), h('div', { class: 'donut-center' }, center));
+  return h('div', { class: 'donut' }, svg('svg', { viewBox: '0 0 200 200', role: 'img', 'aria-label': 'Salary split' }, ...parts), h('div', { class: 'donut-center' }, center));
 }
 
 // ── Janelas de edição e confirmação ──────────────────────────────────────────
@@ -142,11 +142,11 @@ export function openSheet(title: string, build: (close: () => void) => Child, op
     if (e.target === dialog) close();
   });
   const save = opts.onSave
-    ? h('button', { type: 'button', class: 'sheet-save', onclick: () => { if (opts.onSave?.() !== false) close(); } }, opts.saveLabel ?? 'Salvar')
+    ? h('button', { type: 'button', class: 'sheet-save', onclick: () => { if (opts.onSave?.() !== false) close(); } }, opts.saveLabel ?? 'Save')
     : null;
   dialog.append(
     h('header', { class: 'sheet-head' },
-      h('button', { type: 'button', class: 'sheet-cancel', onclick: close }, opts.onSave ? 'Cancelar' : 'Fechar'),
+      h('button', { type: 'button', class: 'sheet-cancel', onclick: close }, opts.onSave ? 'Cancel' : 'Close'),
       h('h2', null, title), save ?? h('span')),
     h('div', { class: 'sheet-body' }, build(close)));
   document.body.appendChild(dialog);
@@ -161,7 +161,7 @@ export function confirmDialog(title: string, message: string, confirmLabel: stri
     dialog.append(
       h('h3', null, title), h('p', null, message),
       h('div', { class: 'alert-actions' },
-        h('button', { type: 'button', class: 'btn plain', onclick: () => dialog.close() }, 'Cancelar'),
+        h('button', { type: 'button', class: 'btn plain', onclick: () => dialog.close() }, 'Cancel'),
         h('button', { type: 'button', class: `btn ${danger ? 'danger' : 'primary'}`, onclick: () => { answer = true; dialog.close(); } }, confirmLabel)));
     document.body.appendChild(dialog);
     dialog.showModal();

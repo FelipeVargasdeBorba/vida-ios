@@ -13,9 +13,9 @@ enum BankAccount: String, CaseIterable, Identifiable, Codable {
 
     var title: String {
         switch self {
-        case .spending: "Conta de gastos"
+        case .spending: "Spending account"
         case .saves: "Saves"
-        case .goal: "Metas"
+        case .goal: "Goals"
         }
     }
 }
@@ -69,7 +69,7 @@ struct WalletOverview: Hashable {
 
 enum AccountSplitCalculator {
     /// Gastos do dia a dia que costumam ficar na conta de gastos.
-    static let defaultSpendingCategories: [BudgetCategory] = [.alimentacao, .transporte, .lazer, .outro]
+    static let defaultSpendingCategories: [BudgetCategory] = [.alimentacao, .transporte, .outro]
 
     /// Divide os alvos do plano entre as contas. A poupança sai da conta de gastos: primeiro a parte de cada
     /// meta (para a conta da meta), e o que sobrar vira a reserva em saves. A soma das fatias é a soma dos alvos.
@@ -94,7 +94,7 @@ enum AccountSplitCalculator {
             savings -= amount
             if amount > 0 { goalSlices.append(SplitSlice(kind: .goal(i), title: g.name, amount: amount, account: .goal)) }
         }
-        if savings > 0 { saves.append(SplitSlice(kind: .reserve, title: "Reserva", amount: savings, account: .saves)) }
+        if savings > 0 { saves.append(SplitSlice(kind: .reserve, title: "Reserve", amount: savings, account: .saves)) }
         return AccountSplit(spending: spending, saves: saves, goals: goalSlices)
     }
 

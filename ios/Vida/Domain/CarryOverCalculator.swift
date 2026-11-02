@@ -49,8 +49,8 @@ enum CarryOverCalculator {
         return total
     }
 
-    /// Onde a sobra entra (e de onde a falta sai), na ordem: Lazer, Outro, Alimentação, Transporte.
-    static let order: [BudgetCategory] = [.lazer, .outro, .alimentacao, .transporte]
+    /// Onde a sobra entra (e de onde a falta sai), na ordem: Outro, Alimentação, Transporte.
+    static let order: [BudgetCategory] = [.outro, .alimentacao, .transporte]
 
     /// Sobra entra inteira na primeira categoria da conta de gastos. Falta é descontada na ordem, sem deixar
     /// nenhum alvo negativo; o que não couber continua no saldo e aparece no período seguinte.

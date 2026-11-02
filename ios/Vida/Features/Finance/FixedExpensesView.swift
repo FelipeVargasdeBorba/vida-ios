@@ -11,7 +11,7 @@ struct FixedExpensesView: View {
     private var currency: Currency { settings?.currency ?? .eur }
 
     private static let suggestions: [(String, BudgetCategory)] = [
-        ("Aluguel", .casa), ("Internet", .fixos), ("Telemóvel", .fixos), ("Seguro", .fixos), ("Passe", .transporte),
+        ("Rent", .casa), ("Internet", .fixos), ("Phone", .fixos), ("Insurance", .fixos), ("Transit pass", .transporte),
     ]
 
     var body: some View {
@@ -26,15 +26,15 @@ struct FixedExpensesView: View {
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(f.name.isEmpty ? c.title : f.name).foregroundStyle(.primary)
                                         if f.dueDay > 0 {
-                                            Label("vence dia \(f.dueDay)", systemImage: f.remindOn ? "bell.fill" : "calendar")
+                                            Label("due on day \(f.dueDay)", systemImage: f.remindOn ? "bell.fill" : "calendar")
                                                 .font(.caption).foregroundStyle(.secondary)
                                         }
                                     }
                                     Spacer()
                                     VStack(alignment: .trailing) {
-                                        Text("\(Money.format(f.monthlyCents, currency))/mês").monospacedDigit()
+                                        Text("\(Money.format(f.monthlyCents, currency))/month").monospacedDigit()
                                         if settings?.frequency == .weekly {
-                                            Text("\(Money.format(BudgetCalculator.perPeriod(monthlyCents: f.monthlyCents, frequency: .weekly), currency))/semana")
+                                            Text("\(Money.format(BudgetCalculator.perPeriod(monthlyCents: f.monthlyCents, frequency: .weekly), currency))/week")
                                                 .font(.caption).foregroundStyle(.secondary)
                                         }
                                     }
@@ -46,7 +46,7 @@ struct FixedExpensesView: View {
                                     try? context.save()
                                     NotificationService.refresh(context)
                                 } label: {
-                                    Label("Apagar", systemImage: "trash")
+                                    Label("Delete", systemImage: "trash")
                                 }
                             }
                         }
@@ -55,7 +55,7 @@ struct FixedExpensesView: View {
             }
             let missing = Self.suggestions.filter { s in !items.contains { $0.name == s.0 } }
             if !missing.isEmpty {
-                Section("Sugestões") {
+                Section("Suggestions") {
                     ForEach(missing, id: \.0) { s in
                         Button { editing = FixedDraft(name: s.0, category: s.1) } label: {
                             Label("\(s.0) (\(s.1.title))", systemImage: "plus.circle")
@@ -64,17 +64,17 @@ struct FixedExpensesView: View {
                 }
             }
             Section {
-                ValueRow(title: "Total mensal", value: Money.format(items.reduce(0) { $0 + $1.monthlyCents }, currency))
+                ValueRow(title: "Monthly total", value: Money.format(items.reduce(0) { $0 + $1.monthlyCents }, currency))
             } footer: {
-                Text("Cadastre só os valores mensais. Em renda semanal, o app converte por ×12/52.")
+                Text("Enter monthly amounts only. With weekly income, the app converts by ×12/52.")
             }
         }
         .vidaList()
-        .navigationTitle("Gastos fixos")
+        .navigationTitle("Fixed expenses")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Button { editing = FixedDraft() } label: { Image(systemName: "plus") }.accessibilityLabel("Novo gasto fixo")
+                Button { editing = FixedDraft() } label: { Image(systemName: "plus") }.accessibilityLabel("New fixed expense")
             }
         }
         .sheet(item: $editing) {
@@ -106,34 +106,34 @@ private struct FixedExpenseForm: View {
     var body: some View {
         NavigationStack {
             Form {
-                TextField("Nome", text: $name)
-                Picker("Categoria", selection: $category) {
+                TextField("Name", text: $name)
+                Picker("Category", selection: $category) {
                     ForEach(BudgetCategory.spending) { Text($0.title).tag($0) }
                 }
                 LabeledContent("Valor mensal") { MoneyField(currency.rawValue, cents: $monthly).id(loaded) }
                 Section {
-                    Picker("Vence no dia", selection: $dueDay) {
-                        Text("Sem data").tag(0)
-                        ForEach(1...31, id: \.self) { Text("Dia \($0)").tag($0) }
+                    Picker("Due on day", selection: $dueDay) {
+                        Text("No date").tag(0)
+                        ForEach(1...31, id: \.self) { Text("Day \($0)").tag($0) }
                     }
                     if dueDay > 0 {
-                        Toggle("Lembrar de pagar", isOn: $remindOn)
+                        Toggle("Remind me to pay", isOn: $remindOn)
                     }
                 } footer: {
                     if dueDay > 0 && remindOn {
-                        Text("Avisa no dia \(dueDay) às \(NotificationPlanner.timeText(reminderMinutes)) (a hora do lembrete do salário). O aviso some quando você marca como paga no checklist.")
+                        Text("Alerts on day \(dueDay) at \(NotificationPlanner.timeText(reminderMinutes)) (the payday reminder time). The alert goes away once you mark it paid in the checklist.")
                     } else if dueDay > 28 {
-                        Text("Nos meses sem o dia \(dueDay), vence no último dia do mês.")
+                        Text("In months without day \(dueDay), it is due on the last day of the month.")
                     }
                 }
             }
             .vidaList()
-            .navigationTitle(draft.item == nil ? "Novo fixo" : "Editar fixo")
+            .navigationTitle(draft.item == nil ? "New fixed expense" : "Edit fixed expense")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancelar") { dismiss() } }
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Salvar") {
+                    Button("Save") {
                         let f = draft.item ?? FixedExpense()
                         f.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
                         f.category = category

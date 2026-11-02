@@ -4,7 +4,7 @@ enum AgendaKind: String, CaseIterable, Identifiable, Codable {
     case obligation, reminder
 
     var id: String { rawValue }
-    var title: String { self == .obligation ? "Obrigação" : "Lembrete" }
+    var title: String { self == .obligation ? "Commitment" : "Reminder" }
     var symbol: String { self == .obligation ? "checklist" : "bell" }
 }
 
@@ -83,13 +83,13 @@ enum NotificationPlanner {
             if let schedule = payday,
                PayPeriodCalculator.period(containing: day, schedule: schedule, calendar: calendar).start == day,
                let fire = calendar.date(byAdding: .minute, value: paydayMinutes, to: day), fire > now {
-                priority.append(PlannedNotification(id: "payday-\(key)", date: fire, title: "Dia de pagamento",
-                                                   body: "Seu salário caiu? Confirme", action: paydayAction))
+                priority.append(PlannedNotification(id: "payday-\(key)", date: fire, title: "Payday",
+                                                   body: "Has your salary arrived? Confirm", action: paydayAction))
             }
             for (i, bill) in bills.enumerated()
             where BillCalculator.isDue(dueDay: bill.dueDay, on: day, calendar: calendar) && !bill.paid.contains(day) {
                 guard let fire = calendar.date(byAdding: .minute, value: paydayMinutes, to: day), fire > now else { continue }
-                priority.append(PlannedNotification(id: "bill-\(i)-\(key)", date: fire, title: "Pagar \(bill.title)",
+                priority.append(PlannedNotification(id: "bill-\(i)-\(key)", date: fire, title: "Pay \(bill.title)",
                                                    body: bill.body, action: billAction))
             }
             for rule in active where rule.occurs(on: day, calendar: calendar) {
@@ -114,7 +114,7 @@ enum NotificationPlanner {
     private static func body(for rule: AgendaRule) -> String {
         switch rule.kind {
         case .obligation: "\(timeText(rule.startMinutes))–\(timeText(rule.endMinutes))"
-        case .reminder: rule.notifyMinutesBefore > 0 ? "Às \(timeText(rule.startMinutes))" : "Lembrete"
+        case .reminder: rule.notifyMinutesBefore > 0 ? "At \(timeText(rule.startMinutes))" : "Reminder"
         }
     }
 

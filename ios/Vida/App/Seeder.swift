@@ -10,10 +10,10 @@ enum Seeder {
         context.insert(FinanceSettings())
 
         let deadline = Calendar.current.date(byAdding: .month, value: 12, to: Calendar.current.startOfDay(for: Date())) ?? Date()
-        context.insert(Goal(name: "Faculdade", targetCents: 500_000, deadline: deadline, priority: 0))
+        context.insert(Goal(name: "College", targetCents: 500_000, deadline: deadline, priority: 0))
 
-        context.insert(NoteList(name: "Compras", sortOrder: 0))
-        context.insert(NoteList(name: "Deveres", sortOrder: 1))
+        context.insert(NoteList(name: "Shopping", sortOrder: 0))
+        context.insert(NoteList(name: "To do", sortOrder: 1))
 
         for weekday in 1...7 {
             context.insert(WorkDay(weekday: weekday))

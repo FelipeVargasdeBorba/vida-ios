@@ -21,8 +21,8 @@ struct PaySchedule: Hashable {
 }
 
 enum Weekday {
-    static let names = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"]
-    static let short = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
+    static let names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    static let short = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
     /// ISO 1…7 (segunda = 1) a partir de uma data.
     static func iso(_ date: Date, _ calendar: Calendar) -> Int {

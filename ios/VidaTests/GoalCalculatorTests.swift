@@ -65,16 +65,16 @@ final class GoalCalculatorTests: XCTestCase {
     }
 
     func testSavingsCheckSuggestsLightestSufficientPreset() {
-        let ok = GoalCalculator.check(incomeCents: 200_000, preset: .balanced, outroPoints: 5, required: 40_000)
+        let ok = GoalCalculator.check(incomeCents: 200_000, preset: .balanced, required: 40_000)
         XCTAssertTrue(ok.isEnough)
         XCTAssertNil(ok.suggestion)
 
-        let short = GoalCalculator.check(incomeCents: 200_000, preset: .balanced, outroPoints: 5, required: 50_000)
+        let short = GoalCalculator.check(incomeCents: 200_000, preset: .balanced, required: 50_000)
         XCTAssertFalse(short.isEnough)
         XCTAssertEqual(short.shortfall, 10_000)
         XCTAssertEqual(short.suggestion, .saver30)
 
-        let impossible = GoalCalculator.check(incomeCents: 200_000, preset: .balanced, outroPoints: 5, required: 120_000)
+        let impossible = GoalCalculator.check(incomeCents: 200_000, preset: .balanced, required: 120_000)
         XCTAssertNil(impossible.suggestion)
     }
 

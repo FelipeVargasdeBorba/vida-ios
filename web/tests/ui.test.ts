@@ -46,21 +46,21 @@ describe('telas', () => {
     expect(m.spendingSpent).toBe(4500);
     expect(m.spendingLeft).toBe(m.split.spendingTotal - 4500);
     const home = dashboard({ today, path: [] }).el;
-    expect(home.textContent).toContain('Conta de gastos agora');
+    expect(home.textContent).toContain('Spending account now');
     expect(home.querySelector('svg.chart')).not.toBeNull();
     const arc = home.querySelector('.donut-arc.pickable') as SVGElement;
     arc.dispatchEvent(new Event('click'));
-    expect(home.querySelector('.donut-text')?.textContent).toContain('do salário');
+    expect(home.querySelector('.donut-text')?.textContent).toContain('of salary');
     const goal = goalDetailView({ today, path: ['goal', goalId] }).el;
     expect(goal.querySelector('svg.chart')).not.toBeNull();
     const chart = goal.querySelector('svg.chart') as SVGElement;
     chart.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft' }));
-    expect(goal.querySelector('.readout')?.textContent).toContain('Guardado');
+    expect(goal.querySelector('.readout')?.textContent).toContain('Saved');
   });
 
   it('mostra o pedido de salário sem entradas', () => {
     store.replace(defaultState());
-    expect(dashboard({ today, path: [] }).el.textContent).toContain('Recebeu o salário?');
-    expect(historyDetailView({ today, path: ['history', 'x'] }).el.textContent).toContain('Não encontrado');
+    expect(dashboard({ today, path: [] }).el.textContent).toContain('Got your salary?');
+    expect(historyDetailView({ today, path: ['history', 'x'] }).el.textContent).toContain('Not found');
   });
 });

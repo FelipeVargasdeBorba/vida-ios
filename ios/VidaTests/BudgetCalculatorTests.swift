@@ -4,20 +4,34 @@ import XCTest
 final class BudgetCalculatorTests: XCTestCase {
     func testAllPresetsSumTo100() {
         for p in BudgetPreset.allCases {
-            XCTAssertEqual(p.basePercents.values.reduce(0, +), 100, p.title)
-            for outro in [0, 5, 50] {
-                XCTAssertEqual(p.percents(outroPoints: outro).values.reduce(0, +), 100, p.title)
-            }
+            XCTAssertEqual(p.percents.values.reduce(0, +), 100, p.title)
         }
     }
 
-    func testOutroComesFromLazerAndIsCapped() {
-        let balanced = BudgetPreset.balanced.percents(outroPoints: 5)
-        XCTAssertEqual(balanced[.lazer], 25)
-        XCTAssertEqual(balanced[.outro], 5)
-        let extreme = BudgetPreset.extreme50.percents(outroPoints: 5)
-        XCTAssertEqual(extreme[.lazer], 0)
-        XCTAssertEqual(extreme[.outro], 4)
+    func testOutroIsASingleCategory() {
+        XCTAssertEqual(BudgetPreset.balanced.percents[.outro], 30)
+        XCTAssertEqual(BudgetPreset.extreme50.percents[.outro], 4)
+        XCTAssertEqual(BudgetPreset.extreme50.percents[.poupanca], 50)
+    }
+
+    func testLegacyLazerIsReadAsOutro() {
+        XCTAssertEqual(BudgetCategory.stored("lazer"), .outro)
+        XCTAssertEqual(BudgetCategory.stored("casa"), .casa)
+        XCTAssertNil(BudgetCategory.stored("nada"))
+        let json = Data(#"["lazer","outro","casa"]"#.utf8)
+        XCTAssertEqual(try JSONDecoder().decode([BudgetCategory].self, from: json), [.outro, .outro, .casa])
+    }
+
+    func testLegacySnapshotLinesAreMerged() {
+        let line = { (c: BudgetCategory, t: Int, s: Int, a: Int?) in SnapshotPayload.Line(category: c, target: t, fixed: 0, spent: s, adjusted: a) }
+        let payload = SnapshotPayload(totalFixed: 0, free: 0, totalSpent: 0, incomeLogged: 0,
+                                      lines: [line(.outro, 5_000, 700, 5_000), line(.outro, 1_000, 200, 0), line(.casa, 100, 0, nil)],
+                                      goals: [], adjustedSavings: nil, shortfall: nil, dailyAllowance: nil, shortfallAccepted: false)
+        let merged = payload.mergingLegacyLines().lines
+        XCTAssertEqual(merged.map(\.category), [.outro, .casa])
+        XCTAssertEqual(merged[0].target, 6_000)
+        XCTAssertEqual(merged[0].spent, 900)
+        XCTAssertEqual(merged[0].adjusted, 5_000)
     }
 
     func testPeriodIncomeCountsOnlySalaryEntries() {
@@ -27,20 +41,19 @@ final class BudgetCalculatorTests: XCTestCase {
     }
 
     func testMonthlySplitBalanced() {
-        let t = BudgetCalculator.split(incomeCents: 200_000, percents: BudgetPreset.balanced.percents(outroPoints: 0))
+        let t = BudgetCalculator.split(incomeCents: 200_000, percents: BudgetPreset.balanced.percents)
         XCTAssertEqual(t[.casa], 56_000)
         XCTAssertEqual(t[.alimentacao], 24_000)
         XCTAssertEqual(t[.fixos], 10_000)
         XCTAssertEqual(t[.transporte], 10_000)
-        XCTAssertEqual(t[.lazer], 60_000)
-        XCTAssertEqual(t[.outro], 0)
+        XCTAssertEqual(t[.outro], 60_000)
         XCTAssertEqual(t[.poupanca], 40_000)
     }
 
     func testSplitSumIsExactWithOddCents() {
         for income in [100_001, 33_333, 1, 99, 123_457] {
             for p in BudgetPreset.allCases {
-                let t = BudgetCalculator.split(incomeCents: income, percents: p.percents(outroPoints: 5))
+                let t = BudgetCalculator.split(incomeCents: income, percents: p.percents)
                 XCTAssertEqual(t.values.reduce(0, +), income, "\(p) \(income)")
             }
         }
@@ -54,7 +67,7 @@ final class BudgetCalculatorTests: XCTestCase {
     }
 
     func testSummaryMonthlyVsWeekly() {
-        let percents = BudgetPreset.balanced.percents(outroPoints: 0)
+        let percents = BudgetPreset.balanced.percents
         let monthlyRent = 80_000
 
         let m = BudgetCalculator.summary(incomeCents: 200_000, percents: percents,

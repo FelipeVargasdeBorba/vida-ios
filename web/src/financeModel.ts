@@ -87,7 +87,7 @@ export function makeFinanceModel(s: AppState, today: Day, period: PayPeriod = cu
   const schedule = scheduleOf(s);
   const spendingAccount = new Set(settings.spendingAccount);
   const preset = presetById(settings.preset);
-  const percents = percentsFor(preset, settings.outroPoints);
+  const percents = percentsFor(preset);
 
   const inPeriod = s.transactions.filter((t) => periodContains(period, t.day));
   const spent: CentsByCategory = {};
@@ -160,7 +160,7 @@ export function makeFinanceModel(s: AppState, today: Day, period: PayPeriod = cu
     daysUntilPayday: daysUntilNextPayday(today, schedule), daysLeft,
     carry, carryCategory: CARRY_ORDER.find((c) => spendingAccount.has(c)) ?? null,
     income, summary, goals: rows, goalRequired,
-    savingsCheck: checkSavings(income, preset, settings.outroPoints, goalRequired),
+    savingsCheck: checkSavings(income, preset, goalRequired),
     adaptation, incomeLogged, contributedThisPeriod,
     shortfallAccepted: settings.acceptedShortfallPeriodStart === period.start,
     split: accountSplit,

@@ -12,11 +12,11 @@ struct FinanceView: View {
                 FinanceDashboard(settings: settings, model: model)
             }
             .vidaList()
-            .navigationTitle("Finanças")
+            .navigationTitle("Finance")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button { router.transactionDraft = TransactionDraft() } label: { Image(systemName: "plus.circle.fill") }
-                        .accessibilityLabel("Nova transação")
+                        .accessibilityLabel("New transaction")
                 }
             }
         }
@@ -49,12 +49,12 @@ private struct FinanceDashboard: View {
             }
             Section {
                 NavigationLink { TransactionsView(settings: settings, initial: model.period) } label: {
-                    Label("Transações", systemImage: "list.bullet")
+                    Label("Transactions", systemImage: "list.bullet")
                 }
-                NavigationLink { FixedExpensesView() } label: { Label("Gastos fixos", systemImage: "pin") }
-                NavigationLink { GoalsView() } label: { Label("Metas", systemImage: "target") }
-                NavigationLink { HistoryView() } label: { Label("Histórico", systemImage: "clock.arrow.circlepath") }
-                NavigationLink { SetupView(settings: settings) } label: { Label("Configurações", systemImage: "gearshape") }
+                NavigationLink { FixedExpensesView() } label: { Label("Fixed expenses", systemImage: "pin") }
+                NavigationLink { GoalsView() } label: { Label("Goals", systemImage: "target") }
+                NavigationLink { HistoryView() } label: { Label("History", systemImage: "clock.arrow.circlepath") }
+                NavigationLink { SetupView(settings: settings) } label: { Label("Settings", systemImage: "gearshape") }
             }
             .font(.subheadline)
             if model.income > 0 {
@@ -64,7 +64,7 @@ private struct FinanceDashboard: View {
                         try? context.save()
                         savedAlert = true
                     } label: {
-                        Label("Salvar no histórico", systemImage: "square.and.arrow.down")
+                        Label("Save to history", systemImage: "square.and.arrow.down")
                     }
                     .font(.subheadline)
                 }
@@ -72,7 +72,7 @@ private struct FinanceDashboard: View {
         }
         .listSectionSpacing(.compact)
         .scrollDismissesKeyboard(.interactively)
-        .alert("Salvo no histórico", isPresented: $savedAlert) { Button("OK", role: .cancel) {} }
+        .alert("Saved to history", isPresented: $savedAlert) { Button("OK", role: .cancel) {} }
     }
 
     /// Sem salário lançado no período ainda não há o que dividir.
@@ -80,21 +80,21 @@ private struct FinanceDashboard: View {
         VStack(alignment: .leading, spacing: 12) {
             IconBadge(symbol: "banknote", tint: .vidaSaves)
             VStack(alignment: .leading, spacing: 4) {
-                Text("Recebeu o salário?").font(.headline)
-                Text("Lance o valor que caiu na conta e o app mostra quanto deixar para gastos e quanto separar para saves.")
+                Text("Got your salary?").font(.headline)
+                Text("Log the amount that landed in your account and the app shows how much to keep for spending and how much to set aside for saves.")
                     .font(.subheadline).foregroundStyle(.secondary)
             }
             Button {
                 router.transactionDraft = TransactionDraft(kind: .income, date: Date())
             } label: {
-                Label("Adicionar salário", systemImage: "plus")
+                Label("Add salary", systemImage: "plus")
                     .font(.subheadline.weight(.semibold))
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
             .buttonBorderShape(.capsule)
             .tint(.vidaSaves)
-            Text("Período \(Fmt.period(model.period))").font(.caption).foregroundStyle(.secondary)
+            Text("Period \(Fmt.period(model.period))").font(.caption).foregroundStyle(.secondary)
         }
         .padding(.vertical, 6)
     }
@@ -119,8 +119,8 @@ private struct FinanceDashboard: View {
             AccountHeader(account: .spending, total: model.money(total))
         } footer: {
             if !rows.isEmpty {
-                Text(spent > total ? "Gasto \(model.money(spent)) · passou \(model.money(spent - total))"
-                                   : "Gasto \(model.money(spent)) · resta \(model.money(total - spent))")
+                Text(spent > total ? "Spent \(model.money(spent)) · over by \(model.money(spent - total))"
+                                   : "Spent \(model.money(spent)) · \(model.money(total - spent)) left")
             }
         }
     }
@@ -129,19 +129,19 @@ private struct FinanceDashboard: View {
     private var carryRow: some View {
         let weekly = settings.frequency == .weekly
         let positive = model.carry > 0
-        let title = positive ? (weekly ? "Sobra da semana passada" : "Sobra do mês passado")
-                             : (weekly ? "Gasto a mais na semana passada" : "Gasto a mais no mês passado")
-        let caption = positive ? "somada ao \(model.carryCategory?.title ?? "plano")" : "descontada dos gastos do dia a dia"
+        let title = positive ? (weekly ? "Left over from last week" : "Left over from last month")
+                             : (weekly ? "Overspent last week" : "Overspent last month")
+        let caption = positive ? "added to \(model.carryCategory?.title ?? "the plan")" : "taken from day-to-day spending"
         return AmountRow(symbol: positive ? "arrow.uturn.forward" : "arrow.uturn.backward",
                          tint: positive ? .vidaSaves : .red, title: title,
                          amount: "\(positive ? "+" : "−") \(model.money(abs(model.carry)))", caption: caption)
             .swipeActions {
-                Button("Zerar") { confirmCarryReset = true }.tint(.orange)
+                Button("Reset") { confirmCarryReset = true }.tint(.orange)
             }
-            .confirmationDialog("Zerar a sobra?", isPresented: $confirmCarryReset, titleVisibility: .visible) {
-                Button("Zerar e recomeçar daqui") { settings.carryFromDate = model.period.start }
+            .confirmationDialog("Reset the carry-over?", isPresented: $confirmCarryReset, titleVisibility: .visible) {
+                Button("Reset and restart here") { settings.carryFromDate = model.period.start }
             } message: {
-                Text("O plano deste período volta ao valor normal. Use quando o saldo da conta de gastos no banco não bater com o app.")
+                Text("This period's plan goes back to its normal value. Use it when the spending account balance at the bank does not match the app.")
             }
     }
 
@@ -153,14 +153,14 @@ private struct FinanceDashboard: View {
                 CategoryRow(line: line, currency: model.currency, adjusted: model.adaptation?.line(line.category)?.adjusted)
             }
             if reserve > 0 {
-                AmountRow(symbol: "leaf", tint: BudgetCategory.poupanca.tint, title: "Reserva",
-                          amount: model.money(reserve), caption: "o que sobra depois das metas")
+                AmountRow(symbol: "leaf", tint: BudgetCategory.poupanca.tint, title: "Reserve",
+                          amount: model.money(reserve), caption: "what is left after the goals")
             }
         } header: {
             AccountHeader(account: .saves, total: model.money(split.savesTotal))
         } footer: {
-            Text(split.savesKept > 0 ? "Separe ao receber. Disso, \(model.money(split.savesKept)) ficam de reserva."
-                                     : "Separe ao receber para pagar as contas.")
+            Text(split.savesKept > 0 ? "Set aside when you get paid. Of that, \(model.money(split.savesKept)) stays as reserve."
+                                     : "Set aside when you get paid to cover the bills.")
         }
     }
 
@@ -176,19 +176,19 @@ private struct FinanceDashboard: View {
         } header: {
             AccountHeader(account: .goal, total: model.money(model.split.goalsTotal))
         } footer: {
-            Text("Cada meta tem a sua conta. Transfira direto para ela, sem passar por saves.")
+            Text("Each goal has its own account. Transfer straight to it, without going through saves.")
         }
     }
 
     private func adaptationSection(_ a: AdaptationResult) -> some View {
-        Section("Adaptação automática") {
+        Section("Automatic adaptation") {
             NavigationLink { AdaptationView() } label: {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Pode gastar \(model.money(a.dailyAllowance)) por dia").font(.subheadline)
-                    Text(!a.isNeeded ? "Tudo dentro do plano"
-                         : a.isFeasible ? "Ajustado para compensar \(model.money(a.need))"
-                         : (model.shortfallAccepted ? "Atraso aceito: faltam \(model.money(a.shortfall))"
-                            : "Faltam \(model.money(a.shortfall)) para a meta"))
+                    Text("You can spend \(model.money(a.dailyAllowance)) per day").font(.subheadline)
+                    Text(!a.isNeeded ? "Everything within the plan"
+                         : a.isFeasible ? "Adjusted to make up \(model.money(a.need))"
+                         : (model.shortfallAccepted ? "Delay accepted: \(model.money(a.shortfall)) short"
+                            : "\(model.money(a.shortfall)) short for the goal"))
                         .font(.caption)
                         .foregroundStyle(a.isFeasible || model.shortfallAccepted ? Color.secondary : Color.red)
                 }
@@ -214,8 +214,8 @@ private struct ChecklistSection: View {
             Section {
                 if showTransfer {
                     let isDone = model.transferCheck != nil
-                    CheckRow(done: isDone, title: "Separar para saves",
-                             subtitle: isDone ? "feito" : "mover ao receber o salário",
+                    CheckRow(done: isDone, title: "Move to saves",
+                             subtitle: isDone ? "done" : "move when you get paid",
                              amount: model.money(model.split.savesTotal), tint: .vidaSaves) {
                         ChecklistActions.toggleTransfer(model, context: context)
                     }
@@ -228,7 +228,7 @@ private struct ChecklistSection: View {
                     }
                 }
                 ForEach(goals, id: \.element.id) { i, row in
-                    CheckRow(done: row.isDoneThisPeriod, title: "Meta \(row.goal.name)",
+                    CheckRow(done: row.isDoneThisPeriod, title: "Goal \(row.goal.name)",
                              subtitle: goalSubtitle(row),
                              amount: model.money(row.isDoneThisPeriod ? row.transferred : row.toMove),
                              tint: SplitSlice.goalTint(i)) {
@@ -239,7 +239,7 @@ private struct ChecklistSection: View {
                 HStack {
                     Label("Checklist", systemImage: "checklist")
                     Spacer()
-                    Text("\(done) de \(total)").monospacedDigit()
+                    Text("\(done) of \(total)").monospacedDigit()
                 }
                 .font(.footnote.weight(.semibold))
                 .foregroundStyle(done == total ? Color.vidaSaves : Color.secondary)
@@ -251,19 +251,19 @@ private struct ChecklistSection: View {
 
     private func goalSubtitle(_ row: GoalRow) -> String {
         guard row.isDoneThisPeriod else {
-            return row.transferred > 0 ? "falta transferir para a conta da meta" : "transferir para a conta da meta"
+            return row.transferred > 0 ? "still to transfer to the goal account" : "transfer to the goal account"
         }
-        return row.transferred == row.allocation ? "transferido" : "transferido · plano \(model.money(row.allocation))"
+        return row.transferred == row.allocation ? "transferred" : "transferred · plan \(model.money(row.allocation))"
     }
 
     private func subtitle(_ bill: BillRow) -> (String, Color) {
         switch bill.state {
         case .paid: ("pago", .secondary)
-        case .overdue(let d): ("venceu há \(d) \(d == 1 ? "dia" : "dias")", .red)
-        case .dueToday: ("vence hoje", .orange)
-        case .upcoming(let d) where d <= 3: ("vence em \(d) \(d == 1 ? "dia" : "dias")", .orange)
-        case .upcoming: ("vence \(Fmt.short(bill.due))", .secondary)
-        case .noDate: ("neste mês", .secondary)
+        case .overdue(let d): ("overdue by \(d) \(d == 1 ? "day" : "days")", .red)
+        case .dueToday: ("due today", .orange)
+        case .upcoming(let d) where d <= 3: ("due in \(d) \(d == 1 ? "day" : "days")", .orange)
+        case .upcoming: ("due \(Fmt.short(bill.due))", .secondary)
+        case .noDate: ("this month", .secondary)
         }
     }
 }
@@ -307,8 +307,8 @@ private struct SplitHero: View {
         let split = model.split
         VStack(spacing: 16) {
             HStack {
-                Label(model.daysUntilPayday == 0 ? "Salário hoje"
-                      : "Salário em \(model.daysUntilPayday) \(model.daysUntilPayday == 1 ? "dia" : "dias")",
+                Label(model.daysUntilPayday == 0 ? "Payday today"
+                      : "Payday in \(model.daysUntilPayday) \(model.daysUntilPayday == 1 ? "day" : "days")",
                       systemImage: "calendar")
                     .font(.footnote.weight(.medium))
                 Spacer()
@@ -317,7 +317,7 @@ private struct SplitHero: View {
             if !split.all.isEmpty {
                 ZStack {
                     Chart(split.all) { slice in
-                        SectorMark(angle: .value("Valor", slice.amount), innerRadius: .ratio(0.72), angularInset: 1.5)
+                        SectorMark(angle: .value("Amount", slice.amount), innerRadius: .ratio(0.72), angularInset: 1.5)
                             .cornerRadius(4)
                             .foregroundStyle(slice.tint)
                     }
@@ -334,15 +334,15 @@ private struct SplitHero: View {
                 }
                 .frame(height: 180)
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel("Divisão do salário")
+                .accessibilityLabel("Salary split")
                 .accessibilityValue(split.all.map { "\($0.title) \(model.money($0.amount))" }.joined(separator: ", "))
             }
             HStack(spacing: 8) {
-                AccountTile(account: .spending, amount: model.money(split.spendingTotal), caption: "dia a dia")
-                AccountTile(account: .saves, amount: model.money(split.savesTotal), caption: "contas e reserva")
+                AccountTile(account: .spending, amount: model.money(split.spendingTotal), caption: "day to day")
+                AccountTile(account: .saves, amount: model.money(split.savesTotal), caption: "bills and reserve")
                 if split.goalsTotal > 0 {
                     AccountTile(account: .goal, amount: model.money(split.goalsTotal),
-                                caption: split.goals.count == 1 ? "conta da meta" : "\(split.goals.count) contas")
+                                caption: split.goals.count == 1 ? "goal account" : "\(split.goals.count) accounts")
                 }
             }
         }
@@ -404,9 +404,9 @@ private struct CategoryRow: View {
                 }
                 SoftBar(progress: line.progress, tint: line.category.tint, isOver: line.isOver)
                 HStack {
-                    Text(line.fixed > line.spent ? "fixos \(fmt(line.fixed))" : "gasto \(fmt(line.spent))")
+                    Text(line.fixed > line.spent ? "fixed \(fmt(line.fixed))" : "spent \(fmt(line.spent))")
                     Spacer()
-                    Text(line.isOver ? "passou \(fmt(-line.remaining))" : "resta \(fmt(line.remaining))")
+                    Text(line.isOver ? "over by \(fmt(-line.remaining))" : "\(fmt(line.remaining)) left")
                         .foregroundStyle(line.isOver ? Color.red : Color.secondary)
                 }
                 .font(.caption).foregroundStyle(.secondary).monospacedDigit()
@@ -414,7 +414,7 @@ private struct CategoryRow: View {
                     Text("Os fixos passam do plano").font(.caption2).foregroundStyle(.red)
                 }
                 if let adjusted, adjusted != line.target {
-                    Text("Ajustado para \(fmt(adjusted))").font(.caption2).foregroundStyle(.orange)
+                    Text("Adjusted to \(fmt(adjusted))").font(.caption2).foregroundStyle(.orange)
                 }
             }
         }
@@ -443,9 +443,9 @@ private struct GoalSplitRow: View {
                 }
                 SoftBar(progress: row.status.progress, tint: tint)
                 HStack {
-                    Text("\(fmt(row.status.saved)) de \(fmt(row.status.target))")
+                    Text("\(fmt(row.status.saved)) of \(fmt(row.status.target))")
                     Spacer()
-                    Text(row.status.isComplete ? "concluída" : "até \(Fmt.short(row.goal.deadline))")
+                    Text(row.status.isComplete ? "completed" : "by \(Fmt.short(row.goal.deadline))")
                 }
                 .font(.caption).foregroundStyle(.secondary).monospacedDigit()
             }
@@ -490,9 +490,9 @@ private struct WalletSection: View {
             HStack(spacing: 12) {
                 IconBadge(symbol: "building.columns", tint: .vidaSaves)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Já tenho em saves").font(.subheadline.weight(.medium))
+                    Text("Already in saves").font(.subheadline.weight(.medium))
                     Text(settings.savesBalanceUpdatedAt > .distantPast
-                         ? "atualizado \(Fmt.short(settings.savesBalanceUpdatedAt))" : "toque para informar")
+                         ? "updated \(Fmt.short(settings.savesBalanceUpdatedAt))" : "tap to enter")
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 MoneyField("0,00", cents: $settings.savesBalanceCents)
@@ -505,16 +505,16 @@ private struct WalletSection: View {
                     Button("OK") { editing = false }
                 }
             }
-            ValueRow(title: "Entra deste salário", value: "+ \(model.money(w.incoming))", tint: .vidaSaves)
+            ValueRow(title: "Comes in from this salary", value: "+ \(model.money(w.incoming))", tint: .vidaSaves)
             if w.bills > 0 {
-                ValueRow(title: "Sai para contas", value: "− \(model.money(w.bills))")
+                ValueRow(title: "Goes out to bills", value: "− \(model.money(w.bills))")
             }
-            LabeledContent("Fica depois do \(settings.frequency.periodNoun)") {
+            LabeledContent("Left after the \(settings.frequency.periodNoun)") {
                 Text(model.money(w.afterPeriod)).monospacedDigit()
             }
             .font(.subheadline.weight(.semibold))
         } header: {
-            Text("Carteira saves")
+            Text("Saves wallet")
         }
         .onChange(of: settings.savesBalanceCents) { settings.savesBalanceUpdatedAt = Date() }
     }
@@ -529,18 +529,18 @@ struct SavingsWarning: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Label("Faltam \(Money.format(check.shortfall, currency)) por período para as metas.",
+            Label("\(Money.format(check.shortfall, currency)) per period short for the goals.",
                   systemImage: "exclamationmark.triangle.fill")
                 .foregroundStyle(.red)
                 .font(.footnote)
             if let s = check.suggestion {
-                Button("Trocar para \(s.title)") { confirm = true }
+                Button("Switch to \(s.title)") { confirm = true }
                     .font(.footnote.weight(.semibold))
-                    .confirmationDialog("Trocar o plano para \(s.title)?", isPresented: $confirm, titleVisibility: .visible) {
-                        Button("Trocar plano") { settings.preset = s }
+                    .confirmationDialog("Switch the plan to \(s.title)?", isPresented: $confirm, titleVisibility: .visible) {
+                        Button("Switch plan") { settings.preset = s }
                     }
             } else {
-                Text("Nenhum plano cobre sozinho. Estenda o prazo ou reduza a meta.")
+                Text("No plan covers it alone. Extend the deadline or reduce the goal.")
                     .font(.caption).foregroundStyle(.secondary)
             }
         }

@@ -3,7 +3,7 @@ import { type Category, SPENDING, CATEGORY_TITLE } from './budget';
 /** Para onde vai cada fatia do salário quando ele cai no banco. */
 export type BankAccount = 'spending' | 'saves' | 'goal';
 
-export const ACCOUNT_TITLE: Record<BankAccount, string> = { spending: 'Conta de gastos', saves: 'Saves', goal: 'Metas' };
+export const ACCOUNT_TITLE: Record<BankAccount, string> = { spending: 'Spending account', saves: 'Saves', goal: 'Goals' };
 
 export type SliceKind =
   | { type: 'category'; category: Category }
@@ -62,7 +62,7 @@ export function splitAccounts(
     savings -= amount;
     if (amount > 0) goalSlices.push({ kind: { type: 'goal', index }, title: g.name, amount, account: 'goal' });
   });
-  if (savings > 0) saves.push({ kind: { type: 'reserve' }, title: 'Reserva', amount: savings, account: 'saves' });
+  if (savings > 0) saves.push({ kind: { type: 'reserve' }, title: 'Reserve', amount: savings, account: 'saves' });
 
   const savesBills = sum(saves.filter((s) => s.kind.type === 'category'));
   const savesTotal = sum(saves);

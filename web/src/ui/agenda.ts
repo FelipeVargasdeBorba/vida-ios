@@ -20,7 +20,7 @@ function itemRow(a: AgendaItem, today: Day): HTMLElement {
     h('button', { type: 'button', class: 'grow left', onclick: () => agendaSheet(today, a) },
       h('span', { class: 'row-title block' }, `${a.kind === 'reminder' ? '🔔' : '📚'} ${a.title}`),
       h('span', { class: 'caption block' }, `${timeText(a.startMinutes)}${a.kind === 'obligation' ? `–${timeText(a.endMinutes)}` : ''} · ${when}`)),
-    h('span', { class: 'mini', role: 'button', tabindex: 0, onclick: () => exportAgendaToCalendar(a, today) }, 'Calendário'));
+    h('span', { class: 'mini', role: 'button', tabindex: 0, onclick: () => exportAgendaToCalendar(a, today) }, 'Calendar'));
 }
 
 export function agendaView(ctx: Ctx): View {
@@ -36,32 +36,32 @@ export function agendaView(ctx: Ctx): View {
   const work = s.workDays.find((w) => w.weekday === isoWeekday(day));
   const items = s.agenda.filter((a) => occursOn(a, day)).sort((a, b) => a.startMinutes - b.startMinutes);
   const rows = [
-    work?.isOn ? h('div', { class: 'row two' }, h('span', { class: 'grow' }, h('span', { class: 'row-title block' }, '💼 Trabalho'),
+    work?.isOn ? h('div', { class: 'row two' }, h('span', { class: 'grow' }, h('span', { class: 'row-title block' }, '💼 Work'),
       h('span', { class: 'caption block' }, `${timeText(work.startMinutes)}–${timeText(work.endMinutes)}`))) : null,
     ...items.map((a) => itemRow(a, ctx.today)),
   ];
-  if (!work?.isOn && items.length === 0) el.append(section(fmtLong(day), [h('div', { class: 'row muted' }, 'Nada neste dia')]));
+  if (!work?.isOn && items.length === 0) el.append(section(fmtLong(day), [h('div', { class: 'row muted' }, 'Nothing on this day')]));
   else el.append(section(fmtLong(day), rows));
-  if (day !== ctx.today) el.append(h('div', { class: 'center' }, button('Voltar para hoje', () => { selected = null; redraw(); })));
+  if (day !== ctx.today) el.append(h('div', { class: 'center' }, button('Back to today', () => { selected = null; redraw(); })));
   el.append(section(null, [
-    h('a', { class: 'row link-row', href: hrefTo('agenda', 'all') }, h('span', { class: 'grow row-title' }, '📋 Todos os itens'), h('span', { class: 'chev' }, '›')),
-    h('a', { class: 'row link-row', href: hrefTo('agenda', 'work') }, h('span', { class: 'grow row-title' }, '💼 Dias de trabalho'), h('span', { class: 'chev' }, '›')),
+    h('a', { class: 'row link-row', href: hrefTo('agenda', 'all') }, h('span', { class: 'grow row-title' }, '📋 All items'), h('span', { class: 'chev' }, '›')),
+    h('a', { class: 'row link-row', href: hrefTo('agenda', 'work') }, h('span', { class: 'grow row-title' }, '💼 Work days'), h('span', { class: 'chev' }, '›')),
   ]));
-  return { title: 'Agenda', el, actions: [h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Novo item', onclick: () => agendaSheet(day) }, '＋')] };
+  return { title: 'Agenda', el, actions: [h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'New item', onclick: () => agendaSheet(day) }, '＋')] };
 }
 
 export function agendaAllView(ctx: Ctx): View {
   const s = store.state;
   const el = h('div', { class: 'page' });
-  if (!s.agenda.length) el.append(emptyState('📋', 'Sem itens', 'Toque em ＋ para criar uma obrigação ou lembrete.'));
+  if (!s.agenda.length) el.append(emptyState('📋', 'No items', 'Tap ＋ to create a commitment or reminder.'));
   else {
-    for (const [kind, title] of [['obligation', 'Obrigações'], ['reminder', 'Lembretes']] as const) {
+    for (const [kind, title] of [['obligation', 'Commitments'], ['reminder', 'Reminders']] as const) {
       const list = s.agenda.filter((a) => a.kind === kind);
       if (list.length) el.append(section(title, list.map((a) => itemRow(a, ctx.today))));
     }
-    el.append(h('p', { class: 'group-footer' }, 'Para ser avisado, use "Calendário": o iPhone não deixa sites agendarem notificações.'));
+    el.append(h('p', { class: 'group-footer' }, 'To be alerted, use "Calendar": iPhone does not let websites schedule notifications.'));
   }
-  return { title: 'Todos os itens', el, back: true, actions: [h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Novo item', onclick: () => agendaSheet(ctx.today) }, '＋')] };
+  return { title: 'All items', el, back: true, actions: [h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'New item', onclick: () => agendaSheet(ctx.today) }, '＋')] };
 }
 
 export function workView(): View {
@@ -74,8 +74,8 @@ export function workView(): View {
     });
     return h('div', { class: 'row two' }, h('div', { class: 'grow' }, toggle(WEEKDAY_NAMES[w.weekday - 1] ?? '', w.isOn, (on) => { store.update(() => { w.isOn = on; }); redraw(); })),
       w.isOn ? h('span', { class: 'times' }, time(w.startMinutes, (m) => { w.startMinutes = m; }), time(w.endMinutes, (m) => { w.endMinutes = m; })) : null);
-  }), 'Os dias de trabalho aparecem na agenda.'));
-  return { title: 'Dias de trabalho', el, back: true };
+  }), 'Work days show up in the agenda.'));
+  return { title: 'Work days', el, back: true };
 }
 
 export { newId, confirmDialog };

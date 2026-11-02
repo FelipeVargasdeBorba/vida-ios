@@ -1,6 +1,6 @@
 # Vida web (PWA) — project rules
 
-Installable PWA, TypeScript strict, UI in Portuguese. Mirrors the native app in `../ios`; product rules are in `../docs/PRODUCT-RULES.md`.
+Installable PWA, TypeScript strict, UI in English (stored values such as category ids stay Portuguese so old backups still load). Mirrors the native app in `../ios`; product rules are in `../docs/PRODUCT-RULES.md`.
 
 ## Build
 - `npm ci`, `npm run dev`, `npm test` (Vitest), `npm run build` (typecheck + Vite + service-worker precache injection).

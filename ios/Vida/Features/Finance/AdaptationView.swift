@@ -7,12 +7,12 @@ struct AdaptationView: View {
             if let a = model.adaptation {
                 AdaptationContent(settings: settings, model: model, result: a)
             } else {
-                ContentUnavailableView("Adaptação desligada", systemImage: "slider.horizontal.3",
-                                       description: Text("Ligue em Configurações › Adaptar plano para bater a meta."))
+                ContentUnavailableView("Adaptation is off", systemImage: "slider.horizontal.3",
+                                       description: Text("Turn it on in Settings › Adapt plan to hit the goal."))
             }
         }
         .vidaList()
-        .navigationTitle("Orçamento ajustado")
+        .navigationTitle("Adjusted budget")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -55,31 +55,31 @@ private struct AdaptationContent: View {
     var body: some View {
         List {
             Section {
-                ValueRow(title: "Pode gastar por dia", value: model.money(result.dailyAllowance), tint: .accentColor)
-                ValueRow(title: "Dias até o pagamento", value: "\(model.daysLeft)")
+                ValueRow(title: "Can spend per day", value: model.money(result.dailyAllowance), tint: .accentColor)
+                ValueRow(title: "Days until payday", value: "\(model.daysLeft)")
                 if result.isNeeded {
-                    ValueRow(title: "A compensar", value: model.money(result.need), tint: .orange)
+                    ValueRow(title: "To make up", value: model.money(result.need), tint: .orange)
                 }
             } footer: {
-                Text(result.isNeeded ? "Restante das categorias flexíveis dividido pelos dias que faltam."
-                     : "Nenhuma categoria passou do alvo. Nada foi ajustado.")
+                Text(result.isNeeded ? "Remaining flexible categories divided by the days left."
+                     : "No category went over its target. Nothing was adjusted.")
             }
 
             Section {
                 HStack {
-                    Text("Categoria").frame(maxWidth: .infinity, alignment: .leading)
+                    Text("Category").frame(maxWidth: .infinity, alignment: .leading)
                     Text("Original").frame(width: 92, alignment: .trailing)
-                    Text("Ajustado").frame(width: 92, alignment: .trailing)
+                    Text("Adjusted").frame(width: 92, alignment: .trailing)
                 }
                 .font(.caption.weight(.semibold)).foregroundStyle(.secondary)
                 ForEach(result.lines) { l in
                     compareRow(l.category.title, l.original, l.adjusted)
                 }
-                compareRow("Poupança", result.originalSavings, result.adjustedSavings)
+                compareRow("Savings", result.originalSavings, result.adjustedSavings)
             } header: {
-                Text("Original × ajustado")
+                Text("Original × adjusted")
             } footer: {
-                Text("Piso protegido das metas: \(model.money(result.savingsFloor)). Casa e Gastos fixos não são cortados.")
+                Text("Protected goal floor: \(model.money(result.savingsFloor)). Home and Fixed expenses are not cut.")
             }
 
             if !result.isFeasible {
@@ -88,31 +88,31 @@ private struct AdaptationContent: View {
         }
         .confirmationDialog(title(for: pending), isPresented: Binding(get: { pending != nil }, set: { if !$0 { pending = nil } }),
                             titleVisibility: .visible, presenting: pending) { option in
-            Button("Confirmar") { apply(option) }
-            Button("Cancelar", role: .cancel) {}
+            Button("Confirm") { apply(option) }
+            Button("Cancel", role: .cancel) {}
         }
     }
 
     private var shortfallSection: some View {
         Section {
-            Label("Mesmo cortando tudo que é flexível, faltam \(model.money(result.shortfall)) para cumprir a meta neste período.",
+            Label("Even cutting everything flexible, \(model.money(result.shortfall)) is still missing to meet the goal this period.",
                   systemImage: "exclamationmark.triangle.fill")
                 .foregroundStyle(.red)
             if model.shortfallAccepted {
-                Label("Atraso aceito neste período", systemImage: "checkmark.circle").foregroundStyle(.secondary)
+                Label("Delay accepted this period", systemImage: "checkmark.circle").foregroundStyle(.secondary)
             } else {
                 if let p = GoalCalculator.moreAggressive(than: settings.preset) {
-                    Button("Trocar para \(p.title)") { pending = .preset(p) }
+                    Button("Switch to \(p.title)") { pending = .preset(p) }
                 }
                 if let ext = deadlineExtension {
-                    Button("Estender \(ext.goal.name) até \(Fmt.full(ext.date))") { pending = .extend(ext.goal, ext.date) }
+                    Button("Extend \(ext.goal.name) to \(Fmt.full(ext.date))") { pending = .extend(ext.goal, ext.date) }
                 }
-                Button("Aceitar o atraso") { pending = .accept }
+                Button("Accept the delay") { pending = .accept }
             }
         } header: {
-            Text("Não fecha")
+            Text("Does not add up")
         } footer: {
-            Text("Nada muda sem a sua confirmação.")
+            Text("Nothing changes without your confirmation.")
         }
     }
 
@@ -129,9 +129,9 @@ private struct AdaptationContent: View {
 
     private func title(for option: AdaptationOption?) -> String {
         switch option {
-        case .preset(let p): "Trocar o plano para \(p.title)?"
-        case .extend(let g, let d): "Estender o prazo de \(g.name) para \(Fmt.full(d))?"
-        case .accept: "Aceitar que a meta atrase neste período?"
+        case .preset(let p): "Switch the plan to \(p.title)?"
+        case .extend(let g, let d): "Extend the deadline of \(g.name) to \(Fmt.full(d))?"
+        case .accept: "Accept that the goal falls behind this period?"
         case nil: ""
         }
     }

@@ -39,57 +39,57 @@ struct AgendaItemForm: View {
     var body: some View {
         NavigationStack {
             Form {
-                TextField("Título", text: $title)
+                TextField("Title", text: $title)
 
-                Section("Quando") {
+                Section("When") {
                     if kind == .reminder {
-                        Picker("Repetição", selection: $isOneTime) {
-                            Text("Dias da semana").tag(false)
-                            Text("Uma vez").tag(true)
+                        Picker("Repeat", selection: $isOneTime) {
+                            Text("Weekdays").tag(false)
+                            Text("Once").tag(true)
                         }
                         .pickerStyle(.segmented)
                     }
                     if kind == .reminder && isOneTime {
-                        DatePicker("Data", selection: $oneTimeDate, displayedComponents: .date)
+                        DatePicker("Date", selection: $oneTimeDate, displayedComponents: .date)
                     } else {
                         WeekdayPicker(mask: $mask)
                         HStack {
-                            Button("Seg–Sex") { mask = 0b0011111 }
+                            Button("Mon–Fri") { mask = 0b0011111 }
                             Spacer()
-                            Button("Todos") { mask = 0b1111111 }
+                            Button("All") { mask = 0b1111111 }
                         }
                         .buttonStyle(.borderless).font(.caption)
                     }
-                    DatePicker(kind == .obligation ? "Início" : "Hora", selection: $start.asTime(), displayedComponents: .hourAndMinute)
+                    DatePicker(kind == .obligation ? "Start" : "Time", selection: $start.asTime(), displayedComponents: .hourAndMinute)
                     if kind == .obligation {
-                        DatePicker("Fim", selection: $end.asTime(), displayedComponents: .hourAndMinute)
+                        DatePicker("End", selection: $end.asTime(), displayedComponents: .hourAndMinute)
                     }
                 }
 
                 if !(kind == .reminder && isOneTime) {
                     Section {
-                        Toggle("Período limitado", isOn: $hasRange)
+                        Toggle("Limited period", isOn: $hasRange)
                         if hasRange {
                             DatePicker("De", selection: $rangeStart, displayedComponents: .date)
-                            DatePicker("Até", selection: $rangeEnd, in: rangeStart..., displayedComponents: .date)
+                            DatePicker("Until", selection: $rangeEnd, in: rangeStart..., displayedComponents: .date)
                         }
                     }
                 }
 
                 Section {
-                    Toggle("Avisar", isOn: $notify)
+                    Toggle("Alert", isOn: $notify)
                     if notify {
-                        Picker("Antecedência", selection: $before) {
-                            ForEach(Self.beforeOptions, id: \.self) { Text($0 == 0 ? "Na hora" : "\($0) min antes").tag($0) }
+                        Picker("Lead time", selection: $before) {
+                            ForEach(Self.beforeOptions, id: \.self) { Text($0 == 0 ? "At the time" : "\($0) min before").tag($0) }
                         }
                     }
                 } footer: {
-                    if notify { Text("Avisos dos próximos 14 dias ficam agendados no aparelho e são renovados ao abrir o app.") }
+                    if notify { Text("Alerts for the next 14 days are scheduled on the device and renewed whenever you open the app.") }
                 }
 
                 if let item = draft.item {
                     Section {
-                        Button("Apagar", role: .destructive) {
+                        Button("Delete", role: .destructive) {
                             context.delete(item)
                             finish()
                         }
@@ -97,11 +97,11 @@ struct AgendaItemForm: View {
                 }
             }
             .vidaList()
-            .navigationTitle(draft.item == nil ? "Novo: \(kind.title.lowercased())" : "Editar \(kind.title.lowercased())")
+            .navigationTitle(draft.item == nil ? "New \(kind.title.lowercased())" : "Edit \(kind.title.lowercased())")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancelar") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) { Button("Salvar", action: save).disabled(!isValid) }
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) { Button("Save", action: save).disabled(!isValid) }
             }
             .onAppear(perform: load)
         }
@@ -166,7 +166,7 @@ struct WorkScheduleView: View {
             ForEach(days) { WorkDayRow(day: $0) }
         }
         .vidaList()
-        .navigationTitle("Dias de trabalho")
+        .navigationTitle("Work days")
         .navigationBarTitleDisplayMode(.inline)
         .onDisappear { try? context.save() }
     }
@@ -179,8 +179,8 @@ private struct WorkDayRow: View {
         Section {
             Toggle(Weekday.name(day.weekday), isOn: $day.isOn)
             if day.isOn {
-                DatePicker("Início", selection: $day.startMinutes.asTime(), displayedComponents: .hourAndMinute)
-                DatePicker("Fim", selection: $day.endMinutes.asTime(), displayedComponents: .hourAndMinute)
+                DatePicker("Start", selection: $day.startMinutes.asTime(), displayedComponents: .hourAndMinute)
+                DatePicker("End", selection: $day.endMinutes.asTime(), displayedComponents: .hourAndMinute)
             }
         }
     }

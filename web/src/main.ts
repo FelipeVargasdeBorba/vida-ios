@@ -11,9 +11,9 @@ import { sync } from './sync';
 import { type Ctx, type View } from './ui/view';
 
 const TABS = [
-  { id: 'finance', label: 'Finanças', icon: '💶' },
+  { id: 'finance', label: 'Finance', icon: '💶' },
   { id: 'agenda', label: 'Agenda', icon: '🗓️' },
-  { id: 'notes', label: 'Notas', icon: '📝' },
+  { id: 'notes', label: 'Notes', icon: '📝' },
 ] as const;
 
 function localToday(): Day {
@@ -74,7 +74,7 @@ const schedule = () => {
 let pending = false;
 
 store.subscribe(() => {
-  if (store.saveError) toast('Não foi possível salvar. Exporte um backup em Finanças › Backup.');
+  if (store.saveError) toast('Could not save. Export a backup under Finance › Backup.');
   schedule();
 });
 window.addEventListener('vida:rerender', schedule);
@@ -88,8 +88,8 @@ document.addEventListener('visibilitychange', () => {
 
 sync.subscribe(schedule);
 sync.onConflict = async () => {
-  if (await confirmDialog('Usar os dados da nuvem?', 'Este aparelho e a sua conta têm dados diferentes. Usar a nuvem substitui o que está aqui.', 'Usar a nuvem', true)) return true;
-  if (await confirmDialog('Enviar os dados deste aparelho?', 'Isso substitui o que está salvo na sua conta.', 'Enviar deste aparelho', true)) return false;
+  if (await confirmDialog('Use the cloud data?', 'This device and your account have different data. Using the cloud replaces what is here.', 'Use the cloud', true)) return true;
+  if (await confirmDialog('Send this device\'s data?', 'This replaces what is saved in your account.', 'Send from this device', true)) return false;
   return null;
 };
 
@@ -102,7 +102,7 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
     reg.addEventListener('updatefound', () => {
       const worker = reg.installing;
       worker?.addEventListener('statechange', () => {
-        if (worker.state === 'installed' && navigator.serviceWorker.controller) toast('Nova versão pronta', 'Atualizar', () => location.reload());
+        if (worker.state === 'installed' && navigator.serviceWorker.controller) toast('New version ready', 'Update', () => location.reload());
       });
     });
   }).catch(() => { /* sem service worker o app continua funcionando online */ });

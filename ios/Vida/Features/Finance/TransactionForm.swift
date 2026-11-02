@@ -20,7 +20,7 @@ struct TransactionForm: View {
     var body: some View {
         NavigationStack {
             Form {
-                Picker("Tipo", selection: $kind) {
+                Picker("Type", selection: $kind) {
                     ForEach(TransactionKind.allCases) { Text($0.title).tag($0) }
                 }
                 .pickerStyle(.segmented)
@@ -29,25 +29,25 @@ struct TransactionForm: View {
                 Section {
                     // `id` recria o campo quando o valor é preenchido ao abrir.
                     MoneyField("Valor (\(currency.rawValue))", cents: $amount).id(loaded)
-                    DatePicker("Data", selection: $date, displayedComponents: .date)
+                    DatePicker("Date", selection: $date, displayedComponents: .date)
                     if kind == .income {
-                        Picker("Origem", selection: $source) {
+                        Picker("Source", selection: $source) {
                             ForEach(IncomeSource.allCases) { Text($0.title).tag($0) }
                         }
                     } else {
-                        Picker("Categoria", selection: $category) {
+                        Picker("Category", selection: $category) {
                             ForEach(BudgetCategory.spending) { Label($0.transactionTitle, systemImage: $0.symbol).tag($0) }
                         }
                     }
-                    TextField("Nota (opcional)", text: $note)
+                    TextField("Note (optional)", text: $note)
                 }
             }
             .vidaList()
-            .navigationTitle(draft.transaction == nil ? (kind == .income ? "Nova entrada" : "Novo gasto") : "Editar")
+            .navigationTitle(draft.transaction == nil ? (kind == .income ? "New income" : "New expense") : "Edit")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancelar") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) { Button("Salvar", action: save).disabled(amount <= 0) }
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) { Button("Save", action: save).disabled(amount <= 0) }
             }
             .onAppear(perform: load)
         }

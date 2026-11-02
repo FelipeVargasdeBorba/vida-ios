@@ -41,13 +41,13 @@ struct RootTabView: View {
         @Bindable var router = router
         TabView(selection: $router.tab) {
             FinanceView()
-                .tabItem { Label("Finanças", systemImage: "eurosign.circle") }
+                .tabItem { Label("Finance", systemImage: "eurosign.circle") }
                 .tag(AppRouter.Tab.finance)
             AgendaView()
                 .tabItem { Label("Agenda", systemImage: "calendar") }
                 .tag(AppRouter.Tab.agenda)
             NoteListsView()
-                .tabItem { Label("Notas", systemImage: "checklist") }
+                .tabItem { Label("Notes", systemImage: "checklist") }
                 .tag(AppRouter.Tab.notes)
         }
         .fontDesign(.rounded)

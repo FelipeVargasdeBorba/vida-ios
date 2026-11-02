@@ -5,6 +5,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 ## [Não lançado]
 
 ### Adicionado
+- Painel do PWA: saldo atual da conta de gastos, gráfico de ritmo de gastos, rosca do salário interativa, gráfico de renda × gasto no histórico e gráfico de progresso das metas (SVG próprio, sem dependências).
 - Sincronização por conta no PWA: entre em qualquer celular e os dados acompanham. Cifra ponta a ponta (AES-256-GCM, chave da senha), API REST do Supabase sem biblioteca, sem sobrescrever em conflito. Veja [docs/pt/SYNC.md](SYNC.md).
 - **App web (PWA)** em `web/`: port completo de finanças, agenda e notas; instalável na Tela de Início do iPhone sem validade, offline via service worker, backup cifrado (AES-256, salvo no iCloud Drive pelo menu Compartilhar), exportação `.ics` para contas e agenda. 88 testes Vitest; publicado no GitHub Pages.
 - Divisão do salário em três destinos (conta de gastos, saves e uma conta por meta), com gráfico de rosca.
@@ -15,6 +16,8 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 - Tema com cores suaves por categoria e fonte arredondada.
 
 ### Alterado
+- Lazer e Outro viraram uma só categoria "Outro" (o percentual de Lazer foi somado a ela, então os totais não mudam). Dados antigos são migrados ao abrir.
+- Toda a interface, nos dois apps, passou para o inglês.
 - O repositório virou um monorepo: app nativo em `ios/`, app web em `web/`, CI separados.
 - A renda do período passa a ser o salário lançado, e não mais um valor fixo nas configurações.
 - Tela de metas mostra só quanto transferir.
@@ -22,6 +25,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 ## [1.0] - 2026-10-30
 
 ### Adicionado
+- Painel do PWA: saldo atual da conta de gastos, gráfico de ritmo de gastos, rosca do salário interativa, gráfico de renda × gasto no histórico e gráfico de progresso das metas (SVG próprio, sem dependências).
 - Finanças por período de pagamento (mensal ou semanal), modelos de divisão, metas, adaptação automática e histórico.
 - Agenda com obrigações, lembretes, dias de trabalho e notificações locais.
 - Notas em listas.

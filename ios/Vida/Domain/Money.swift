@@ -8,19 +8,19 @@ enum Currency: String, CaseIterable, Identifiable, Codable {
     var title: String {
         switch self {
         case .eur: "Euro (€)"
-        case .brl: "Real (R$)"
-        case .usd: "Dólar (US$)"
-        case .gbp: "Libra (£)"
+        case .brl: "Brazilian real (R$)"
+        case .usd: "US dollar ($)"
+        case .gbp: "British pound (£)"
         }
     }
 }
 
 /// Dinheiro é sempre `Int` em centavos. Aqui só formatação e leitura de texto.
 enum Money {
-    /// Locale das telas: o do aparelho se for português, senão pt-PT.
+    /// Language of the screens: the device's if it is English, otherwise en-GB.
     static let locale: Locale = {
         let current = Locale.current
-        return current.language.languageCode?.identifier == "pt" ? current : Locale(identifier: "pt_PT")
+        return current.language.languageCode?.identifier == "en" ? current : Locale(identifier: "en_GB")
     }()
 
     private static var styles: [Currency: Decimal.FormatStyle.Currency] = [:]
@@ -38,7 +38,7 @@ enum Money {
 
     /// Texto editável sem símbolo, ex.: 1250 → "12,50".
     static func plain(_ cents: Int) -> String {
-        let sep = locale.decimalSeparator ?? ","
+        let sep = locale.decimalSeparator ?? "."
         let sign = cents < 0 ? "-" : ""
         let value = abs(cents)
         let frac = value % 100

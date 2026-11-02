@@ -20,37 +20,37 @@ struct TransactionsView: View {
                     Button { period = PayPeriodCalculator.previous(period, schedule: settings.schedule, calendar: .current) } label: {
                         Image(systemName: "chevron.left").padding(8)
                     }
-                    .accessibilityLabel("Período anterior")
+                    .accessibilityLabel("Previous period")
                     Spacer()
                     Text(Fmt.period(period)).font(.subheadline.weight(.medium))
                     Spacer()
                     Button { period = PayPeriodCalculator.next(period, schedule: settings.schedule, calendar: .current) } label: {
                         Image(systemName: "chevron.right").padding(8)
                     }
-                    .accessibilityLabel("Próximo período")
+                    .accessibilityLabel("Next period")
                 }
                 .padding(.horizontal)
                 .padding(.vertical, 4)
                 .background(.bar)
             }
             .vidaList()
-            .navigationTitle("Transações")
+            .navigationTitle("Transactions")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
-                        Picker("Categoria", selection: $filter) {
-                            Text("Todas").tag(BudgetCategory?.none)
+                        Picker("Category", selection: $filter) {
+                            Text("All").tag(BudgetCategory?.none)
                             ForEach(BudgetCategory.spending) { Text($0.transactionTitle).tag(BudgetCategory?.some($0)) }
                         }
                     } label: {
                         Image(systemName: filter == nil ? "line.3.horizontal.decrease.circle" : "line.3.horizontal.decrease.circle.fill")
                     }
-                    .accessibilityLabel("Filtrar por categoria")
+                    .accessibilityLabel("Filter by category")
                 }
                 ToolbarItem(placement: .primaryAction) {
                     Button { router.transactionDraft = TransactionDraft() } label: { Image(systemName: "plus.circle.fill") }
-                        .accessibilityLabel("Nova transação")
+                        .accessibilityLabel("New transaction")
                 }
             }
     }
@@ -65,10 +65,12 @@ private struct TransactionList: View {
     init(period: PayPeriod, filter: BudgetCategory?, currency: Currency) {
         self.currency = currency
         let start = period.start, end = period.end
-        if let raw = filter?.rawValue {
+        if let filter {
+            // Lançamentos antigos de "Lazer" contam como "Outro".
+            let raws = filter == .outro ? [BudgetCategory.outro.rawValue, "lazer"] : [filter.rawValue]
             let expense = TransactionKind.expense.rawValue
             _items = Query(filter: #Predicate<Transaction> {
-                $0.date >= start && $0.date < end && $0.categoryRaw == raw && $0.kindRaw == expense
+                $0.date >= start && $0.date < end && raws.contains($0.categoryRaw) && $0.kindRaw == expense
             }, sort: \Transaction.date, order: .reverse)
         } else {
             _items = Query(filter: #Predicate<Transaction> { $0.date >= start && $0.date < end },
@@ -80,13 +82,13 @@ private struct TransactionList: View {
         let groups = grouped()
         List {
             if items.isEmpty {
-                ContentUnavailableView("Sem transações", systemImage: "tray", description: Text("Toque em + para lançar."))
+                ContentUnavailableView("No transactions", systemImage: "tray", description: Text("Tap + to add one."))
             } else {
                 Section {
                     let income = items.filter { $0.kind == .income }.reduce(0) { $0 + $1.amountCents }
                     let spent = items.filter { $0.kind == .expense }.reduce(0) { $0 + $1.amountCents }
-                    ValueRow(title: "Entradas", value: Money.format(income, currency), tint: .green)
-                    ValueRow(title: "Gastos", value: Money.format(spent, currency))
+                    ValueRow(title: "Income", value: Money.format(income, currency), tint: .green)
+                    ValueRow(title: "Expenses", value: Money.format(spent, currency))
                 }
             }
             ForEach(groups, id: \.day) { group in
@@ -97,9 +99,9 @@ private struct TransactionList: View {
                                 Button(role: .destructive) {
                                     context.delete(t)
                                     try? context.save()
-                                } label: { Label("Apagar", systemImage: "trash") }
+                                } label: { Label("Delete", systemImage: "trash") }
                                 Button { router.transactionDraft = TransactionDraft(transaction: t) } label: {
-                                    Label("Editar", systemImage: "pencil")
+                                    Label("Edit", systemImage: "pencil")
                                 }
                                 .tint(.blue)
                             }

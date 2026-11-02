@@ -26,17 +26,17 @@ struct NoteListsView: View {
                 }
             }
             .vidaList()
-            .navigationTitle("Notas")
+            .navigationTitle("Notes")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button { newName = ""; creating = true } label: { Image(systemName: "plus.circle.fill") }
-                        .accessibilityLabel("Nova lista")
+                        .accessibilityLabel("New list")
                 }
             }
-            .alert("Nova lista", isPresented: $creating) {
-                TextField("Nome", text: $newName)
-                Button("Cancelar", role: .cancel) {}
-                Button("Criar") {
+            .alert("New list", isPresented: $creating) {
+                TextField("Name", text: $newName)
+                Button("Cancel", role: .cancel) {}
+                Button("Create") {
                     let name = newName.trimmingCharacters(in: .whitespacesAndNewlines)
                     guard !name.isEmpty else { return }
                     context.insert(NoteList(name: name, sortOrder: (lists.map(\.sortOrder).max() ?? 0) + 1))
@@ -57,7 +57,7 @@ struct NoteListView: View {
         let items = list.sortedItems
         List {
             Section {
-                TextField("Adicionar item", text: $text)
+                TextField("Add item", text: $text)
                     .focused($focused)
                     .submitLabel(.done)
                     .onSubmit(add)
@@ -76,7 +76,7 @@ struct NoteListView: View {
                     }
                     .swipeActions {
                         Button(role: .destructive) { context.delete(item); try? context.save() } label: {
-                            Label("Apagar", systemImage: "trash")
+                            Label("Delete", systemImage: "trash")
                         }
                     }
                 }
@@ -87,7 +87,7 @@ struct NoteListView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Button("Limpar feitos") {
+                Button("Clear completed") {
                     for i in items where i.isDone { context.delete(i) }
                     try? context.save()
                 }

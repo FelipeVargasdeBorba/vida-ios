@@ -10,12 +10,12 @@ As decisões de negócio do app. Cada uma tem testes em `VidaTests`.
 - Dias da semana seguem a ISO (1 = segunda … 7 = domingo); horários são minutos desde a meia-noite.
 
 ## Plano
-- Cinco modelos de divisão (Equilibrado 50/30/20, Mais lazer, Poupador 30%, Agressivo 40%, Extremo 50%).
-- "Outro" tira `outroPoints` (padrão 5) do percentual de Lazer, limitado ao próprio Lazer.
+- Cinco modelos de divisão (Equilibrado 50/30/20, Mais folga, Poupador 30%, Agressivo 40%, Extremo 50%).
+- "Outro" é a única categoria flexível do dia a dia (Lazer e Outro foram unidos; valores "lazer" guardados são lidos como "outro").
 - Gasto efetivo de uma categoria = `max(real, fixos)`: um fixo ainda não lançado já conta.
 
 ## Para onde vai o salário
-- **Conta de gastos:** as categorias escolhidas (padrão Alimentação, Transporte, Lazer, Outro).
+- **Conta de gastos:** as categorias escolhidas (padrão Alimentação, Transporte, Outro).
 - **Saves:** o resto (Casa, Gastos fixos) mais a **Reserva**, que é o que sobra da poupança depois das metas.
 - **Conta de cada meta:** a parte da poupança destinada à meta, por prioridade, transferida direto, sem passar por saves.
 - A soma de todas as fatias é igual ao salário.
@@ -35,7 +35,7 @@ As decisões de negócio do app. Cada uma tem testes em `VidaTests`.
 
 ## Sobra da conta de gastos
 - Saldo acumulado de (parte do salário para gastos − usado) de todos os períodos anteriores, desde o primeiro salário lançado.
-- A sobra soma em Lazer (ou na primeira categoria da conta de gastos). A falta é descontada na ordem Lazer, Outro, Alimentação, Transporte, sem deixar nenhum alvo negativo.
+- A sobra soma em Outro (ou na primeira categoria da conta de gastos). A falta é descontada na ordem Outro, Alimentação, Transporte, sem deixar nenhum alvo negativo.
 - "Zerar" recomeça a contagem no período atual e pede confirmação.
 
 ## Adaptação automática

@@ -7,7 +7,7 @@ struct GoalsView: View {
             GoalsContent(settings: settings, model: model)
         }
         .vidaList()
-        .navigationTitle("Metas")
+        .navigationTitle("Goals")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -25,15 +25,15 @@ private struct GoalsContent: View {
         List {
             Section {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Neste \(settings.frequency.periodNoun)").font(.caption).foregroundStyle(.secondary)
+                    Text("This \(settings.frequency.periodNoun)").font(.caption).foregroundStyle(.secondary)
                     if model.income == 0 {
-                        Text("Lance o salário para ver quanto transferir").font(.headline)
+                        Text("Log your salary to see how much to transfer").font(.headline)
                     } else if toMove > 0 {
-                        Text("Transfira \(model.money(toMove)) para as metas").font(.headline)
+                        Text("Transfer \(model.money(toMove)) to your goals").font(.headline)
                     } else {
-                        Label("Tudo transferido", systemImage: "checkmark.seal.fill").font(.headline).foregroundStyle(Color.vidaSaves)
+                        Label("All transferred", systemImage: "checkmark.seal.fill").font(.headline).foregroundStyle(Color.vidaSaves)
                     }
-                    Text("Cada meta tem a sua conta: transfira direto para ela. Toque no círculo quando transferir.")
+                    Text("Each goal has its own account: transfer straight to it. Tap the circle once you do.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 .padding(.vertical, 4)
@@ -52,16 +52,16 @@ private struct GoalsContent: View {
                         }
                         .buttonStyle(.borderless)
                         .disabled(row.allocation == 0)
-                        .accessibilityLabel(row.isDoneThisPeriod ? "Desfazer" : "Marcar como transferido")
+                        .accessibilityLabel(row.isDoneThisPeriod ? "Undo" : "Mark as transferred")
                         NavigationLink { GoalDetailView(goal: row.goal, currency: model.currency) } label: {
                             GoalRowView(row: row, model: model, tint: SplitSlice.goalTint(i))
                         }
                     }
                     .swipeActions(edge: .trailing) {
                         Button(role: .destructive) { context.delete(row.goal); try? context.save() } label: {
-                            Label("Apagar", systemImage: "trash")
+                            Label("Delete", systemImage: "trash")
                         }
-                        Button { goalDraft = GoalDraft(goal: row.goal) } label: { Label("Editar", systemImage: "pencil") }
+                        Button { goalDraft = GoalDraft(goal: row.goal) } label: { Label("Edit", systemImage: "pencil") }
                             .tint(.blue)
                     }
                     .swipeActions(edge: .leading) {
@@ -70,17 +70,17 @@ private struct GoalsContent: View {
                 }
                 .onMove(perform: move)
             } header: {
-                Text("Suas metas")
+                Text("Your goals")
             } footer: {
                 Text(model.goals.count > 1
-                     ? "A de cima recebe primeiro. Para mudar a ordem, toque em Editar e arraste."
-                     : "Deslize para a direita para registrar um valor diferente.")
+                     ? "The top one is funded first. To change the order, tap Edit and drag."
+                     : "Swipe right to record a different amount.")
             }
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) { EditButton() }
             ToolbarItem(placement: .primaryAction) {
-                Button { goalDraft = GoalDraft() } label: { Image(systemName: "plus") }.accessibilityLabel("Nova meta")
+                Button { goalDraft = GoalDraft() } label: { Image(systemName: "plus") }.accessibilityLabel("New goal")
             }
         }
         .goalTransfer($goalAction, model: model)
@@ -114,8 +114,8 @@ private struct GoalRowView: View {
                     .foregroundStyle(row.toMove > 0 ? Color.primary : Color.secondary)
             }
             SoftBar(progress: s.progress, tint: tint)
-            Text(s.isComplete ? "Meta concluída · \(model.money(s.saved))"
-                 : "\(model.money(s.saved)) de \(model.money(s.target)) · até \(Fmt.full(row.goal.deadline))")
+            Text(s.isComplete ? "Goal completed · \(model.money(s.saved))"
+                 : "\(model.money(s.saved)) of \(model.money(s.target)) · by \(Fmt.full(row.goal.deadline))")
                 .font(.caption).foregroundStyle(s.isOverdue && !s.isComplete ? Color.red : Color.secondary)
                 .monospacedDigit()
         }
@@ -123,10 +123,10 @@ private struct GoalRowView: View {
     }
 
     private var headline: String {
-        if row.status.isComplete { return "concluída" }
-        if row.isDoneThisPeriod { return "transferido \(model.money(row.transferred))" }
-        if row.toMove > 0 { return "transfira \(model.money(row.toMove))" }
-        return "nada agora"
+        if row.status.isComplete { return "completed" }
+        if row.isDoneThisPeriod { return "transferred \(model.money(row.transferred))" }
+        if row.toMove > 0 { return "transfer \(model.money(row.toMove))" }
+        return "nothing now"
     }
 }
 
@@ -149,17 +149,17 @@ struct GoalForm: View {
     var body: some View {
         NavigationStack {
             Form {
-                TextField("Nome", text: $name)
+                TextField("Name", text: $name)
                 LabeledContent("Valor-alvo") { MoneyField(currency.rawValue, cents: $target).id(loaded) }
-                DatePicker("Prazo", selection: $deadline, displayedComponents: .date)
+                DatePicker("Deadline", selection: $deadline, displayedComponents: .date)
             }
             .vidaList()
-            .navigationTitle(draft.goal == nil ? "Nova meta" : "Editar meta")
+            .navigationTitle(draft.goal == nil ? "New goal" : "Edit goal")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancelar") { dismiss() } }
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Salvar") {
+                    Button("Save") {
                         let g = draft.goal ?? Goal(priority: nextPriority)
                         g.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
                         g.targetCents = target
@@ -201,16 +201,16 @@ struct ContributionForm: View {
         NavigationStack {
             Form {
                 LabeledContent("Valor") { MoneyField(currency.rawValue, cents: $amount).id(loaded) }
-                DatePicker("Data", selection: $date, displayedComponents: .date)
-                TextField("Nota (opcional)", text: $note)
+                DatePicker("Date", selection: $date, displayedComponents: .date)
+                TextField("Note (optional)", text: $note)
             }
             .vidaList()
-            .navigationTitle(contribution == nil ? "Aporte em \(goal.name)" : "Editar aporte")
+            .navigationTitle(contribution == nil ? "Contribution to \(goal.name)" : "Edit contribution")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancelar") { dismiss() } }
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Salvar") {
+                    Button("Save") {
                         let c = contribution ?? GoalContribution()
                         c.amountCents = amount
                         c.date = date
@@ -253,12 +253,12 @@ private struct GoalDetailView: View {
         let items = (goal.contributions ?? []).sorted { $0.date > $1.date }
         List {
             Section {
-                ValueRow(title: "Guardado", value: Money.format(goal.savedCents, currency), tint: .green)
-                ValueRow(title: "Alvo", value: Money.format(goal.targetCents, currency))
-                ValueRow(title: "Prazo", value: Fmt.full(goal.deadline))
+                ValueRow(title: "Saved", value: Money.format(goal.savedCents, currency), tint: .green)
+                ValueRow(title: "Target", value: Money.format(goal.targetCents, currency))
+                ValueRow(title: "Deadline", value: Fmt.full(goal.deadline))
             }
-            Section("Aportes") {
-                if items.isEmpty { Text("Nenhum aporte ainda").foregroundStyle(.secondary) }
+            Section("Contributions") {
+                if items.isEmpty { Text("No contributions yet").foregroundStyle(.secondary) }
                 ForEach(items) { c in
                     Button { editingContribution = c } label: {
                         HStack {
@@ -272,7 +272,7 @@ private struct GoalDetailView: View {
                     }
                     .swipeActions {
                         Button(role: .destructive) { context.delete(c); try? context.save() } label: {
-                            Label("Apagar", systemImage: "trash")
+                            Label("Delete", systemImage: "trash")
                         }
                     }
                 }
@@ -283,10 +283,10 @@ private struct GoalDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Editar") { editingGoal = GoalDraft(goal: goal) }
+                Button("Edit") { editingGoal = GoalDraft(goal: goal) }
             }
             ToolbarItem(placement: .primaryAction) {
-                Button { adding = true } label: { Image(systemName: "plus") }.accessibilityLabel("Novo aporte")
+                Button { adding = true } label: { Image(systemName: "plus") }.accessibilityLabel("New contribution")
             }
         }
         .sheet(isPresented: $adding) { ContributionForm(goal: goal, contribution: nil, currency: currency) }

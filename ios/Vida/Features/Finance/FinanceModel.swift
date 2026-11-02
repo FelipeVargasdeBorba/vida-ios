@@ -156,8 +156,7 @@ struct FinanceModel {
             summary: summary,
             goals: rows,
             goalRequired: required,
-            savingsCheck: GoalCalculator.check(incomeCents: income, preset: settings.preset,
-                                               outroPoints: settings.outroPoints, required: required),
+            savingsCheck: GoalCalculator.check(incomeCents: income, preset: settings.preset, required: required),
             adaptation: adaptation,
             incomeLogged: incomeLogged,
             contributedThisPeriod: contributedThisPeriod,
@@ -183,7 +182,6 @@ struct FinanceModel {
         s.savingsPlannedCents = summary.savings
         s.adaptEnabled = adaptation != nil
         let payload = SnapshotPayload(
-            outroPoints: settings.outroPoints,
             totalFixed: summary.totalFixed,
             free: summary.free,
             totalSpent: summary.totalSpent,

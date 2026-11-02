@@ -8,40 +8,40 @@ struct SetupView: View {
     var body: some View {
         Form {
             Section {
-                Picker("Moeda", selection: $settings.currencyCode) {
+                Picker("Currency", selection: $settings.currencyCode) {
                     ForEach(Currency.allCases) { Text($0.title).tag($0.rawValue) }
                 }
-                Picker("Frequência", selection: $settings.frequencyRaw) {
+                Picker("Frequency", selection: $settings.frequencyRaw) {
                     ForEach(PayFrequency.allCases) { Text($0.title).tag($0.rawValue) }
                 }
                 .pickerStyle(.segmented)
             } header: {
-                Text("Salário")
+                Text("Salary")
             } footer: {
-                Text("O valor do plano é o salário que você lança em Nova entrada, com origem Salário.")
+                Text("The plan amount is the salary you log under New income, with the source set to Salary.")
             }
 
             Section {
                 if settings.frequency == .monthly {
-                    Picker("Dia do pagamento", selection: $settings.payDayOfMonth) {
-                        ForEach(1...31, id: \.self) { Text("Dia \($0)").tag($0) }
+                    Picker("Payday", selection: $settings.payDayOfMonth) {
+                        ForEach(1...31, id: \.self) { Text("Day \($0)").tag($0) }
                     }
                 } else {
-                    Picker("Dia do pagamento", selection: $settings.payWeekday) {
+                    Picker("Payday", selection: $settings.payWeekday) {
                         ForEach(1...7, id: \.self) { Text(Weekday.name($0)).tag($0) }
                     }
                 }
-                Toggle("Lembrete no dia do pagamento", isOn: $settings.paydayReminderOn)
-                DatePicker("Hora dos lembretes", selection: $settings.reminderMinutes.asTime(), displayedComponents: .hourAndMinute)
+                Toggle("Reminder on payday", isOn: $settings.paydayReminderOn)
+                DatePicker("Reminder time", selection: $settings.reminderMinutes.asTime(), displayedComponents: .hourAndMinute)
             } header: {
-                Text("Pagamento")
+                Text("Payday")
             } footer: {
                 if settings.frequency == .monthly && settings.payDayOfMonth > 28 {
-                    Text("Nos meses sem o dia \(settings.payDayOfMonth), conta o último dia do mês.")
+                    Text("In months without day \(settings.payDayOfMonth), the last day of the month counts.")
                 }
             }
 
-            Section("Modelo de divisão") {
+            Section("Split model") {
                 ForEach(BudgetPreset.allCases) { preset in
                     Button {
                         settings.preset = preset
@@ -56,8 +56,6 @@ struct SetupView: View {
                         }
                     }
                 }
-                let lazer = settings.preset.basePercents[.lazer] ?? 0
-                Stepper("Outro: \(min(settings.outroPoints, lazer))% (sai do Lazer)", value: $settings.outroPoints, in: 0...lazer)
             }
 
             Section {
@@ -74,27 +72,27 @@ struct SetupView: View {
                     }
                 }
             } header: {
-                Text("Fica na conta de gastos")
+                Text("Stays in the spending account")
             } footer: {
-                Text("O que estiver desligado vai para saves ao receber, junto com a poupança e as metas.")
+                Text("Anything switched off goes to saves when you get paid, together with savings and goals.")
             }
 
             Section {
-                Toggle("Adaptar plano para bater a meta", isOn: $settings.adaptEnabled)
+                Toggle("Adapt plan to hit the goal", isOn: $settings.adaptEnabled)
                 if settings.adaptEnabled {
-                    LabeledContent("Mínimo de Alimentação") {
+                    LabeledContent("Minimum for Food") {
                         MoneyField("0", cents: $settings.foodMinimumCents)
                     }
-                    NavigationLink("Categorias flexíveis e ordem de corte") { FlexibleOrderView(settings: settings) }
+                    NavigationLink("Flexible categories and cut order") { FlexibleOrderView(settings: settings) }
                 }
             } header: {
-                Text("Adaptação automática")
+                Text("Automatic adaptation")
             } footer: {
-                Text("Se você gastar acima do alvo, o app recalcula o resto do período cortando as categorias flexíveis. A poupança exigida pelas metas, Casa e Gastos fixos nunca são cortados.")
+                Text("If you spend above target, the app recalculates the rest of the period by cutting flexible categories. The savings required by goals, Home and Fixed expenses are never cut.")
             }
         }
         .vidaList()
-        .navigationTitle("Configurações")
+        .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
         .onDisappear {
             try? context.save()
@@ -115,33 +113,33 @@ struct FlexibleOrderView: View {
                     HStack {
                         Label(c.title, systemImage: c.symbol)
                         Spacer()
-                        Button("Proteger") { settings.flexibleOrder.removeAll { $0 == c } }
+                        Button("Protect") { settings.flexibleOrder.removeAll { $0 == c } }
                             .buttonStyle(.borderless)
                             .font(.caption)
                     }
                 }
                 .onMove { settings.flexibleOrder.move(fromOffsets: $0, toOffset: $1) }
             } header: {
-                Text("Cortadas nesta ordem")
+                Text("Cut in this order")
             } footer: {
-                Text("Arraste para mudar a ordem. \"Proteger\" tira a categoria dos cortes.")
+                Text("Drag to change the order. \"Protect\" removes the category from cuts.")
             }
             if !locked.isEmpty {
-                Section("Protegidas") {
+                Section("Protected") {
                     ForEach(locked) { c in
                         Button { settings.flexibleOrder.append(c) } label: {
-                            Label("Tornar flexível: \(c.title)", systemImage: "plus.circle")
+                            Label("Make flexible: \(c.title)", systemImage: "plus.circle")
                         }
                     }
                 }
             }
-            Section("Sempre protegidas") {
-                Text("Casa, Gastos fixos e a poupança exigida pelas metas").foregroundStyle(.secondary)
+            Section("Always protected") {
+                Text("Home, Fixed expenses and the savings required by goals").foregroundStyle(.secondary)
             }
         }
         .environment(\.editMode, .constant(.active))
         .vidaList()
-        .navigationTitle("Flexíveis")
+        .navigationTitle("Flexible")
         .navigationBarTitleDisplayMode(.inline)
     }
 }

@@ -4,7 +4,10 @@ import SwiftUI
 /// Marcar e desmarcar itens do checklist. Desmarcar só desfaz o que o próprio checklist criou.
 enum ChecklistActions {
     /// Nota dos aportes criados pelo checklist (para poder desfazer).
-    static let goalNote = "Separado no checklist"
+    static let goalNote = "Set aside from checklist"
+    /// Nota usada antes de o app ser traduzido; aportes antigos continuam sendo reconhecidos.
+    static let legacyGoalNote = "Separado no checklist"
+    static func isGoalNote(_ note: String) -> Bool { note == goalNote || note == legacyGoalNote }
 
     static func toggleTransfer(_ model: FinanceModel, context: ModelContext) {
         if let check = model.transferCheck {
@@ -29,7 +32,7 @@ enum ChecklistActions {
 
     /// Desfaz as transferências que o checklist registrou neste período.
     static func undoGoal(_ row: GoalRow, period: PayPeriod, context: ModelContext) {
-        for c in row.goal.contributions ?? [] where c.note == goalNote && period.contains(c.date) {
+        for c in row.goal.contributions ?? [] where isGoalNote(c.note) && period.contains(c.date) {
             context.delete(c)
         }
         try? context.save()
@@ -62,14 +65,14 @@ private struct GoalTransferModifier: ViewModifier {
                 ContributionForm(goal: row.goal, contribution: nil, currency: model.currency,
                                  suggested: row.toMove, defaultNote: ChecklistActions.goalNote)
             }
-            .confirmationDialog("Desfazer a transferência?", isPresented: Binding(
+            .confirmationDialog("Undo the transfer?", isPresented: Binding(
                 get: { undoRow != nil }, set: { if !$0 { action = nil } }
             ), titleVisibility: .visible, presenting: undoRow) { row in
-                Button("Desfazer", role: .destructive) {
+                Button("Undo", role: .destructive) {
                     ChecklistActions.undoGoal(row, period: model.period, context: context)
                 }
             } message: { row in
-                Text("\(row.goal.name): \(model.money(row.transferred)) deixam de contar neste período.")
+                Text("\(row.goal.name): \(model.money(row.transferred)) no longer counts in this period.")
             }
     }
 }

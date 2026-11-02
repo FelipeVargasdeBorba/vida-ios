@@ -35,7 +35,7 @@ describe('modelo de finanças', () => {
       x.settings.payWeekday = 5;
       x.transactions.push(
         { id: '1', kind: 'income', source: 'salary', amount: 50_000, day: d(2026, 10, 30), category: 'outro', note: '' },
-        { id: '2', kind: 'expense', source: 'salary', amount: 5_000, day: d(2026, 11, 1), category: 'lazer', note: '' },
+        { id: '2', kind: 'expense', source: 'salary', amount: 5_000, day: d(2026, 11, 1), category: 'outro', note: '' },
         { id: '3', kind: 'income', source: 'salary', amount: 50_000, day: d(2026, 11, 6), category: 'outro', note: '' },
       );
     });
@@ -43,7 +43,7 @@ describe('modelo de finanças', () => {
     const w2 = makeFinanceModel(s, d(2026, 11, 6));
     expect(w1.split.spendingTotal).toBe(23_500);
     expect(w2.carry).toBe(18_500);
-    expect(w2.summary.lines.find((l) => l.category === 'lazer')?.target).toBe(31_000);
+    expect(w2.summary.lines.find((l) => l.category === 'outro')?.target).toBe(33_500);
     expect(w2.split.spendingTotal).toBe(42_000);
     expect(w2.split.savesTotal).toBe(w1.split.savesTotal);
   });

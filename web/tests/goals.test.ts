@@ -61,14 +61,14 @@ describe('metas', () => {
 
   it('sugere o plano mais leve que cobre', () => {
     const balanced = presetById('balanced');
-    const ok = checkSavings(200_000, balanced, 5, 40_000);
+    const ok = checkSavings(200_000, balanced, 40_000);
     expect(ok.isEnough).toBe(true);
     expect(ok.suggestion).toBeNull();
-    const short = checkSavings(200_000, balanced, 5, 50_000);
+    const short = checkSavings(200_000, balanced, 50_000);
     expect(short.isEnough).toBe(false);
     expect(short.shortfall).toBe(10_000);
     expect(short.suggestion?.id).toBe('saver30');
-    expect(checkSavings(200_000, balanced, 5, 120_000).suggestion).toBeNull();
+    expect(checkSavings(200_000, balanced, 120_000).suggestion).toBeNull();
   });
 
   it('prazo estendido', () => {

@@ -8,8 +8,8 @@ struct HistoryView: View {
     var body: some View {
         List {
             if snapshots.isEmpty {
-                ContentUnavailableView("Histórico vazio", systemImage: "clock",
-                                       description: Text("Use \"Salvar no histórico\" em Finanças."))
+                ContentUnavailableView("History is empty", systemImage: "clock",
+                                       description: Text("Use \"Save to history\" in Finance."))
             } else {
                 Section {
                     // Somado por moeda, caso ela tenha mudado.
@@ -23,21 +23,21 @@ struct HistoryView: View {
                 NavigationLink { HistoryDetailView(snapshot: s) } label: {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(Fmt.period(PayPeriod(start: s.periodStart, end: s.periodEnd))).font(.headline)
-                        Text("\(s.preset.title) · guardar \(Money.format(s.savingsPlannedCents, s.currency))")
+                        Text("\(s.preset.title) · save \(Money.format(s.savingsPlannedCents, s.currency))")
                             .font(.caption).foregroundStyle(.secondary)
-                        Text("Salvo em \(s.savedAt.formatted(.dateTime.day().month().hour().minute().locale(Money.locale)))")
+                        Text("Saved on \(s.savedAt.formatted(.dateTime.day().month().hour().minute().locale(Money.locale)))")
                             .font(.caption2).foregroundStyle(.tertiary)
                     }
                 }
                 .swipeActions {
                     Button(role: .destructive) { context.delete(s); try? context.save() } label: {
-                        Label("Apagar", systemImage: "trash")
+                        Label("Delete", systemImage: "trash")
                     }
                 }
             }
         }
         .vidaList()
-        .navigationTitle("Histórico")
+        .navigationTitle("History")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -49,20 +49,20 @@ private struct HistoryDetailView: View {
         let cur = snapshot.currency
         let p = snapshot.payload
         List {
-            Section("Período") {
-                ValueRow(title: "Datas", value: Fmt.period(PayPeriod(start: snapshot.periodStart, end: snapshot.periodEnd)))
-                ValueRow(title: "Renda", value: "\(Money.format(snapshot.incomeCents, cur)) · \(snapshot.frequency.title)")
-                ValueRow(title: "Plano", value: snapshot.preset.title)
-                ValueRow(title: "Poupança planejada", value: Money.format(snapshot.savingsPlannedCents, cur), tint: .green)
+            Section("Period") {
+                ValueRow(title: "Dates", value: Fmt.period(PayPeriod(start: snapshot.periodStart, end: snapshot.periodEnd)))
+                ValueRow(title: "Income", value: "\(Money.format(snapshot.incomeCents, cur)) · \(snapshot.frequency.title)")
+                ValueRow(title: "Plan", value: snapshot.preset.title)
+                ValueRow(title: "Planned savings", value: Money.format(snapshot.savingsPlannedCents, cur), tint: .green)
                 if let p {
-                    ValueRow(title: "Fixos", value: Money.format(p.totalFixed, cur))
-                    ValueRow(title: "Livre", value: Money.format(p.free, cur))
-                    ValueRow(title: "Gasto real", value: Money.format(p.totalSpent, cur))
-                    ValueRow(title: "Entradas lançadas", value: Money.format(p.incomeLogged, cur))
+                    ValueRow(title: "Fixed", value: Money.format(p.totalFixed, cur))
+                    ValueRow(title: "Free", value: Money.format(p.free, cur))
+                    ValueRow(title: "Actual spending", value: Money.format(p.totalSpent, cur))
+                    ValueRow(title: "Income logged", value: Money.format(p.incomeLogged, cur))
                 }
             }
             if let p {
-                Section("Linhas") {
+                Section("Lines") {
                     ForEach(p.lines, id: \.category) { l in
                         VStack(alignment: .leading, spacing: 2) {
                             HStack {
@@ -72,26 +72,26 @@ private struct HistoryDetailView: View {
                                     .foregroundStyle(max(l.spent, l.fixed) > l.target ? .red : .secondary)
                             }
                             HStack {
-                                if l.fixed > 0 { Text("Fixos \(Money.format(l.fixed, cur))") }
+                                if l.fixed > 0 { Text("Fixed \(Money.format(l.fixed, cur))") }
                                 Spacer()
-                                if let a = l.adjusted, a != l.target { Text("Ajustado \(Money.format(a, cur))").foregroundStyle(.orange) }
+                                if let a = l.adjusted, a != l.target { Text("Adjusted \(Money.format(a, cur))").foregroundStyle(.orange) }
                             }
                             .font(.caption).foregroundStyle(.secondary)
                         }
                     }
                 }
                 if snapshot.adaptEnabled {
-                    Section("Adaptação") {
-                        if let v = p.adjustedSavings { ValueRow(title: "Poupança ajustada", value: Money.format(v, cur)) }
-                        if let v = p.dailyAllowance { ValueRow(title: "Por dia", value: Money.format(v, cur)) }
+                    Section("Adaptation") {
+                        if let v = p.adjustedSavings { ValueRow(title: "Adjusted savings", value: Money.format(v, cur)) }
+                        if let v = p.dailyAllowance { ValueRow(title: "Per day", value: Money.format(v, cur)) }
                         if let v = p.shortfall, v > 0 {
-                            ValueRow(title: "Faltou", value: Money.format(v, cur), tint: .red)
-                            ValueRow(title: "Atraso aceito", value: p.shortfallAccepted ? "Sim" : "Não")
+                            ValueRow(title: "Shortfall", value: Money.format(v, cur), tint: .red)
+                            ValueRow(title: "Delay accepted", value: p.shortfallAccepted ? "Yes" : "No")
                         }
                     }
                 }
                 if !p.goals.isEmpty {
-                    Section("Metas") {
+                    Section("Goals") {
                         ForEach(p.goals, id: \.self) { g in
                             VStack(alignment: .leading, spacing: 2) {
                                 HStack {
@@ -99,7 +99,7 @@ private struct HistoryDetailView: View {
                                     Spacer()
                                     Text("\(Money.format(g.saved, cur)) / \(Money.format(g.target, cur))").monospacedDigit()
                                 }
-                                Text("Exigido no período \(Money.format(g.requiredThisPeriod, cur)) · aportado \(Money.format(g.contributedThisPeriod, cur))")
+                                Text("Required this period \(Money.format(g.requiredThisPeriod, cur)) · contributed \(Money.format(g.contributedThisPeriod, cur))")
                                     .font(.caption).foregroundStyle(.secondary)
                             }
                         }
@@ -108,7 +108,7 @@ private struct HistoryDetailView: View {
             }
         }
         .vidaList()
-        .navigationTitle("Detalhe")
+        .navigationTitle("Details")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
