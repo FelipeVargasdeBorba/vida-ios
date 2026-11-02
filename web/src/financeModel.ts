@@ -59,6 +59,10 @@ export interface FinanceModel {
   contributedThisPeriod: number;
   shortfallAccepted: boolean;
   split: AccountSplit;
+  /** Já gasto nas categorias da conta de gastos neste período. */
+  spendingSpent: number;
+  /** Valor atual da conta de gastos: o que cabe no período menos o que já foi gasto (negativo = estourou). */
+  spendingLeft: number;
   wallet: WalletOverview;
   bills: BillRow[];
   transferCheck: Check | null;
@@ -134,6 +138,8 @@ export function makeFinanceModel(s: AppState, today: Day, period: PayPeriod = cu
   const accountSplit = splitAccounts({ ...targets, poupanca: summary.savings }, spendingAccount,
     rows.map((r) => ({ name: r.goal.name, allocation: r.effectiveAllocation })));
 
+  const spendingSpent = summary.lines.filter((l) => spendingAccount.has(l.category)).reduce((a, l) => a + l.spent, 0);
+
   const bills: BillRow[] = s.fixed.map((f) => {
     const due = occurrence(f.dueDay, period, settings.frequency);
     const check = s.checks.find((c) => c.kind === 'bill' && c.forDay === due && c.fixedId === f.id) ?? null;
@@ -158,6 +164,7 @@ export function makeFinanceModel(s: AppState, today: Day, period: PayPeriod = cu
     adaptation, incomeLogged, contributedThisPeriod,
     shortfallAccepted: settings.acceptedShortfallPeriodStart === period.start,
     split: accountSplit,
+    spendingSpent, spendingLeft: accountSplit.spendingTotal - spendingSpent,
     wallet: makeWallet(settings.savesBalance, accountSplit),
     bills,
     transferCheck: s.checks.find((c) => c.kind === 'savesTransfer' && c.forDay === period.start) ?? null,

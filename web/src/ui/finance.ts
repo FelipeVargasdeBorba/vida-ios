@@ -10,7 +10,9 @@ import { type FinanceModel, type GoalRow, currentPeriod, makeFinanceModel, sched
 import { moreAggressive, extendedDeadline } from '../domain/goals';
 import { type PayPeriod, nextPeriod, periodContains, previousPeriod } from '../domain/payPeriod';
 import { PRESETS, presetById } from '../domain/budget';
+import { cumulative, paceSeries } from '../domain/insights';
 import { store } from '../store';
+import { areaChart, barChart } from './charts';
 import {
   bar, button, catColor, confirmDialog, donut, emptyState, goalColor, iconBadge, linkRow, moneyInput, openSheet, section, sliceColor, toast, valueRow,
 } from './components';
@@ -67,7 +69,7 @@ export function dashboard(ctx: Ctx): View {
   const el = h('div', { class: 'page' });
   const $ = (c: number) => money(c, cur);
 
-  if (m.income > 0) el.append(hero(m));
+  if (m.income > 0) el.append(balanceHero(m, ctx));
   else el.append(salaryPrompt(m, ctx));
 
   if (syncConfigured) {
@@ -76,6 +78,8 @@ export function dashboard(ctx: Ctx): View {
   put(el, checklist(m));
 
   if (m.income > 0) {
+    el.append(paceCard(m, ctx));
+    el.append(splitCard(m));
     const catLines = (account: BankAccount) => m.summary.lines.filter((l) =>
       (s.settings.spendingAccount.includes(l.category) ? 'spending' : 'saves') === account && (l.target > 0 || effective(l) > 0));
 
@@ -106,16 +110,16 @@ export function dashboard(ctx: Ctx): View {
     if (m.adaptation) el.append(adaptationCard(m));
   }
 
-  const links: Child[] = [
-    linkRow('🧾', 'Transações', hrefTo(FINANCE, 'transactions')),
-    linkRow('📌', 'Gastos fixos', hrefTo(FINANCE, 'fixed')),
-    linkRow('🎯', 'Metas', hrefTo(FINANCE, 'goals')),
-    linkRow('🕘', 'Histórico', hrefTo(FINANCE, 'history')),
-    linkRow('⚙️', 'Configurações', hrefTo(FINANCE, 'setup')),
-    syncConfigured ? linkRow('☁️', 'Conta e nuvem', hrefTo(FINANCE, 'account'), sync.signedIn ? 'conectada' : undefined) : null,
-    linkRow('💾', 'Backup protegido', hrefTo(FINANCE, 'backup')),
-  ];
-  el.append(section(null, links));
+  const tile = (symbol: string, title: string, href: string, detail?: string) => h('a', { class: 'nav-tile', href },
+    h('span', { class: 'nav-icon', 'aria-hidden': 'true' }, symbol), h('span', { class: 'strong' }, title), detail ? h('span', { class: 'caption' }, detail) : null);
+  el.append(h('section', { class: 'group' }, h('h2', { class: 'group-title' }, 'Explorar'), h('div', { class: 'nav-grid' },
+    tile('🧾', 'Transações', hrefTo(FINANCE, 'transactions'), 'tudo que entrou e saiu'),
+    tile('📌', 'Gastos fixos', hrefTo(FINANCE, 'fixed'), `${store.state.fixed.length} cadastrados`),
+    tile('🎯', 'Metas', hrefTo(FINANCE, 'goals'), m.goals.length ? `${m.goals.length} em andamento` : 'crie a primeira'),
+    tile('🕘', 'Histórico', hrefTo(FINANCE, 'history'), 'compare períodos'),
+    tile('⚙️', 'Configurações', hrefTo(FINANCE, 'setup')),
+    syncConfigured ? tile('☁️', 'Conta e nuvem', hrefTo(FINANCE, 'account'), sync.signedIn ? 'conectada' : 'entrar') : null,
+    tile('💾', 'Backup', hrefTo(FINANCE, 'backup'), 'protegido por senha'))));
   if (m.income > 0) {
     el.append(h('div', { class: 'center' }, button('Salvar no histórico', () => { saveSnapshot(m); toast('Salvo no histórico'); })));
   }
@@ -143,22 +147,76 @@ function salaryPrompt(m: FinanceModel, ctx: Ctx): HTMLElement {
     h('p', { class: 'caption' }, `Período ${fmtPeriod(m.period)}`)));
 }
 
-function hero(m: FinanceModel): HTMLElement {
-  const { split } = m;
-  const center = h('div', { class: 'donut-text' },
-    h('span', { class: 'caption' }, 'Separar'), h('strong', { class: 'num' }, money(split.movedOut, m.currency)),
-    h('span', { class: 'caption' }, `de ${money(m.income, m.currency)}`));
-  const tile = (account: BankAccount, amount: number, caption: string) => h('div', { class: `tile ${account}` },
-    h('span', { class: 'tile-title' }, `${accountIcon[account]} ${ACCOUNT_TITLE[account]}`), h('strong', { class: 'num' }, money(amount, m.currency)), h('span', { class: 'caption' }, caption));
-  return h('section', { class: 'group' }, h('div', { class: 'card hero' },
+/** Valor atual da conta de gastos, com o ritmo diário que ainda cabe no período. */
+function balanceHero(m: FinanceModel, ctx: Ctx): HTMLElement {
+  const $ = (c: number) => money(c, m.currency);
+  const total = m.split.spendingTotal;
+  const left = m.spendingLeft;
+  const used = total > 0 ? m.spendingSpent / total : m.spendingSpent > 0 ? 1 : 0;
+  const perDay = left > 0 ? Math.floor(left / m.daysLeft) : 0;
+  const today = store.state.transactions.filter((t) => t.kind === 'expense' && t.day === m.today && store.state.settings.spendingAccount.includes(t.category))
+    .reduce((a, t) => a + t.amount, 0);
+  const tone = left < 0 ? 'bad' : used > 0.85 ? 'warn' : 'good';
+  const stat = (title: string, value: string, caption: string) => h('div', { class: 'tile' },
+    h('span', { class: 'tile-title' }, title), h('strong', { class: 'num' }, value), h('span', { class: 'caption' }, caption));
+  return h('section', { class: 'group' }, h('div', { class: 'card hero balance' },
     h('div', { class: 'hero-head' },
       h('span', { class: 'chip' }, m.daysUntilPayday === 0 ? 'Salário hoje' : `Salário em ${plural(m.daysUntilPayday, 'dia', 'dias')}`),
       h('span', { class: 'muted' }, fmtPeriod(m.period))),
-    donut(split.all, center),
+    h('div', { class: 'balance-main' },
+      h('span', { class: 'caption' }, '💳 Conta de gastos agora'),
+      h('strong', { class: `balance-value num ${tone}` }, $(left)),
+      h('span', { class: 'caption num' }, left < 0 ? `passou ${$(-left)} do que cabia (${$(total)})` : `de ${$(total)} · gasto ${$(m.spendingSpent)}`)),
+    bar(used, left < 0 ? 'var(--bad)' : 'var(--cat-lazer)', left < 0),
+    h('div', { class: 'tiles' },
+      stat('Por dia', left > 0 ? $(perDay) : '—', left > 0 ? `${plural(m.daysLeft, 'dia', 'dias')} restantes` : 'sem folga'),
+      stat('Hoje', $(today), today > 0 ? 'gasto hoje' : 'nada gasto'),
+      stat('Usado', `${Math.round(Math.min(used, 9.99) * 100)}%`, 'do período')),
+    h('div', { class: 'quick' },
+      button('− Gasto', () => transactionSheet(ctx.today), 'primary'),
+      button('+ Entrada', () => transactionSheet(ctx.today, undefined, 'income')))));
+}
+
+/** Gasto acumulado do período contra o ritmo uniforme do orçamento da conta de gastos. */
+function paceCard(m: FinanceModel, ctx: Ctx): HTMLElement {
+  const s = store.state;
+  const spending = new Set(s.settings.spendingAccount);
+  const expenses = s.transactions.filter((t) => t.kind === 'expense' && spending.has(t.category)).map((t) => ({ day: t.day, amount: t.amount }));
+  const budget = m.split.spendingTotal;
+  const pts = paceSeries(m.period, ctx.today, budget, expenses);
+  const idx = Math.max(0, Math.min(pts.length - 1, ctx.today - m.period.start));
+  const ahead = (pts[idx]?.spent ?? 0) - (pts[idx]?.ideal ?? 0);
+  const note = budget <= 0 ? 'Sem orçamento na conta de gastos.'
+    : ahead > 0 ? `Você está ${money(ahead, m.currency)} acima do ritmo.` : `Você está ${money(-ahead, m.currency)} abaixo do ritmo.`;
+  return section('📈 Ritmo de gastos', [h('div', { class: 'chart-card' }, areaChart({
+    points: pts.map((p) => ({ label: fmtShort(p.day), value: p.spent, ref: p.ideal })),
+    cap: budget, capLabel: 'Orçamento', valueLabel: 'Gasto', refLabel: 'Ritmo ideal', fmt: (c) => money(c, m.currency),
+    initial: idx, overIsBad: true, ariaLabel: 'Gasto acumulado no período',
+  }))], `${note} Toque ou arraste no gráfico para ver cada dia.`);
+}
+
+/** Rosca do salário: toque numa fatia para ver o valor e a porcentagem. */
+function splitCard(m: FinanceModel): HTMLElement {
+  const { split } = m;
+  const total = split.all.reduce((a, x) => a + x.amount, 0);
+  const idle = () => [
+    h('span', { class: 'caption' }, 'Separar'), h('strong', { class: 'num' }, money(split.movedOut, m.currency)),
+    h('span', { class: 'caption' }, `de ${money(m.income, m.currency)}`)];
+  const center = h('div', { class: 'donut-text' }, idle());
+  const tile = (account: BankAccount, amount: number, caption: string) => h('div', { class: `tile ${account}` },
+    h('span', { class: 'tile-title' }, `${accountIcon[account]} ${ACCOUNT_TITLE[account]}`), h('strong', { class: 'num' }, money(amount, m.currency)), h('span', { class: 'caption' }, caption));
+  const chart = donut(split.all, center, (i) => {
+    const x = i === null ? undefined : split.all[i];
+    center.replaceChildren(...(x
+      ? [h('span', { class: 'caption' }, x.title), h('strong', { class: 'num' }, money(x.amount, m.currency)), h('span', { class: 'caption' }, `${Math.round((x.amount / Math.max(1, total)) * 100)}% do salário`)]
+      : idle()));
+  });
+  return section('🥧 Divisão do salário', [h('div', { class: 'hero' }, chart,
     h('div', { class: 'tiles' },
       tile('spending', split.spendingTotal, 'dia a dia'), tile('saves', split.savesTotal, 'contas e reserva'),
       split.goalsTotal > 0 ? tile('goal', split.goalsTotal, split.goals.length === 1 ? 'conta da meta' : `${split.goals.length} contas`) : null),
-    h('ul', { class: 'legend' }, split.all.map((x) => h('li', null, h('i', { style: { background: sliceColor(x) } }), h('span', null, x.title), h('span', { class: 'num muted' }, money(x.amount, m.currency)))))));
+    h('ul', { class: 'legend' }, split.all.map((x) => h('li', null, h('i', { style: { background: sliceColor(x) } }), h('span', null, x.title), h('span', { class: 'num muted' }, money(x.amount, m.currency))))))],
+  'Toque numa fatia da rosca para ver o detalhe.');
 }
 
 function checklist(m: FinanceModel): HTMLElement | null {
@@ -292,8 +350,14 @@ export function transactionsView(ctx: Ctx): View {
     h('button', { type: 'button', 'aria-label': 'Período anterior', onclick: () => go(previousPeriod(period, schedule)) }, '‹'),
     h('strong', null, fmtPeriod(period)),
     h('button', { type: 'button', 'aria-label': 'Próximo período', onclick: () => go(nextPeriod(period, schedule)) }, '›'));
-  const filter = h('select', { class: 'field filter', 'aria-label': 'Filtrar por categoria', onchange: () => { txFilter = filter.value as Category | ''; window.dispatchEvent(new Event('vida:rerender')); } },
-    h('option', { value: '' }, 'Todas as categorias'), SPENDING.map((c) => h('option', { value: c, selected: c === txFilter }, TRANSACTION_TITLE[c])));
+  const periodExpenses = s.transactions.filter((t) => periodContains(period, t.day) && t.kind === 'expense');
+  const chip = (value: Category | '', label: string, amount: number) => h('button', {
+    type: 'button', class: `chip-btn${txFilter === value ? ' on' : ''}`, 'aria-pressed': txFilter === value,
+    onclick: () => { txFilter = txFilter === value ? '' : value; window.dispatchEvent(new Event('vida:rerender')); },
+  }, h('span', null, label), amount > 0 ? h('span', { class: 'num caption' }, money(amount, cur)) : null);
+  const filter = h('div', { class: 'chips', role: 'group', 'aria-label': 'Filtrar por categoria' },
+    chip('', 'Todas', periodExpenses.reduce((a, t) => a + t.amount, 0)),
+    SPENDING.map((c) => chip(c, `${CATEGORY_ICON[c]} ${TRANSACTION_TITLE[c]}`, periodExpenses.filter((t) => t.category === c).reduce((a, t) => a + t.amount, 0))));
 
   const el = h('div', { class: 'page' }, nav, filter);
   if (items.length === 0) el.append(emptyState('🧾', 'Sem transações', 'Toque em ＋ para lançar.'));
@@ -406,8 +470,13 @@ export function goalDetailView(ctx: Ctx): View {
   const cur = s.settings.currency;
   const saved = s.contributions.filter((c) => c.goalId === goal.id).reduce((a, c) => a + c.amount, 0);
   const items = s.contributions.filter((c) => c.goalId === goal.id).sort((a, b) => b.day - a.day);
+  const curve = cumulative(items);
   const el = h('div', { class: 'page' },
     section(null, [valueRow('Guardado', money(saved, cur), 'good'), valueRow('Alvo', money(goal.target, cur)), valueRow('Prazo', fmtFull(goal.deadline))]),
+    curve.length > 1 ? section('📈 Evolução', [h('div', { class: 'chart-card' }, areaChart({
+      points: curve.map((c) => ({ label: fmtShort(c.day), value: c.total })),
+      cap: goal.target, capLabel: 'Alvo', valueLabel: 'Guardado', fmt: (c) => money(c, cur), initial: curve.length - 1, ariaLabel: 'Evolução do valor guardado',
+    }))], `${Math.round(Math.min(1, saved / Math.max(1, goal.target)) * 100)}% do alvo.`) : null,
     section('Aportes', items.length ? items.map((c) => h('div', { class: 'row two' },
       h('button', { type: 'button', class: 'grow left', onclick: () => contributionSheet(goal, ctx.today, { existingId: c.id }) },
         h('span', { class: 'row-title block' }, fmtFull(c.day)), c.note ? h('span', { class: 'caption block' }, c.note) : null),
@@ -430,7 +499,14 @@ export function historyView(): View {
   const el = h('div', { class: 'page' });
   if (!s.snapshots.length) el.append(emptyState('🕘', 'Histórico vazio', 'Use "Salvar no histórico" em Finanças.'));
   else {
-    el.append(section(null, s.snapshots.map((x) => h('a', { class: 'row link-row', href: hrefTo(FINANCE, 'history', x.id) },
+    const recent = [...s.snapshots].sort((a, b) => a.periodStart - b.periodStart).slice(-8);
+    const cur = recent[recent.length - 1]?.currency ?? s.settings.currency;
+    el.append(section('📊 Entrada × gasto', [h('div', { class: 'chart-card' }, barChart({
+      groups: recent.map((x) => ({ id: x.id, label: fmtShort(x.periodStart), a: x.income, b: x.totalSpent })),
+      aLabel: 'Renda', bLabel: 'Gasto', fmt: (c) => money(c, cur), ariaLabel: 'Renda e gasto por período',
+      onOpen: (id) => { location.hash = hrefTo(FINANCE, 'history', id); },
+    }))], recent.length > 1 ? 'Toque numa barra para ler os valores e abrir o período.' : 'Salve mais períodos para comparar.'));
+    el.append(section('Períodos salvos', s.snapshots.map((x) => h('a', { class: 'row link-row', href: hrefTo(FINANCE, 'history', x.id) },
       h('span', { class: 'grow' }, h('span', { class: 'row-title block' }, fmtPeriod({ start: x.periodStart, end: x.periodEnd })),
         h('span', { class: 'caption block' }, `${presetById(x.preset).title} · guardar ${money(x.savingsPlanned, x.currency)}`),
         h('span', { class: 'caption block faint' }, `Salvo em ${fmtStamp(x.savedAt)}`)), h('span', { class: 'chev' }, '›')))));

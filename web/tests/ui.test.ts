@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { dayFromYMD } from '../src/domain/dates';
 import { defaultState, newId } from '../src/state';
+import { makeFinanceModel } from '../src/financeModel';
 import { store } from '../src/store';
 import { agendaAllView, agendaView, workView } from '../src/ui/agenda';
 import { adaptationView, dashboard, fixedView, goalDetailView, goalsView, historyDetailView, historyView, transactionsView } from '../src/ui/finance';
@@ -34,6 +35,27 @@ describe('telas', () => {
     for (const v of views) expect(v.el.textContent?.length).toBeGreaterThan(0);
     expect(views[0]!.el.textContent).toContain('Checklist');
     expect(views[0]!.el.textContent).toContain('Aluguel');
+  });
+
+  it('mostra o saldo da conta de gastos e os gráficos interativos', () => {
+    const goalId = seed();
+    store.update((s) => {
+      s.contributions.push({ id: newId(), goalId, amount: 5000, day: today - 5, note: '' }, { id: newId(), goalId, amount: 7000, day: today - 2, note: '' });
+    });
+    const m = makeFinanceModel(store.state, today);
+    expect(m.spendingSpent).toBe(4500);
+    expect(m.spendingLeft).toBe(m.split.spendingTotal - 4500);
+    const home = dashboard({ today, path: [] }).el;
+    expect(home.textContent).toContain('Conta de gastos agora');
+    expect(home.querySelector('svg.chart')).not.toBeNull();
+    const arc = home.querySelector('.donut-arc.pickable') as SVGElement;
+    arc.dispatchEvent(new Event('click'));
+    expect(home.querySelector('.donut-text')?.textContent).toContain('do salário');
+    const goal = goalDetailView({ today, path: ['goal', goalId] }).el;
+    expect(goal.querySelector('svg.chart')).not.toBeNull();
+    const chart = goal.querySelector('svg.chart') as SVGElement;
+    chart.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft' }));
+    expect(goal.querySelector('.readout')?.textContent).toContain('Guardado');
   });
 
   it('mostra o pedido de salário sem entradas', () => {

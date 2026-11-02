@@ -96,12 +96,14 @@ export function labelled(label: string, control: Node): HTMLElement {
 }
 
 /** Rosca com as fatias do salário (SVG, sem biblioteca). */
-export function donut(slices: SplitSlice[], center: HTMLElement): HTMLElement {
+export function donut(slices: SplitSlice[], center: HTMLElement, onPick?: (index: number | null) => void): HTMLElement {
   const r = 70;
   const circ = 2 * Math.PI * r;
   const total = slices.reduce((a, s) => a + s.amount, 0);
   const gap = slices.length > 1 ? 2.2 : 0;
   const parts: SVGElement[] = [svg('circle', { cx: 100, cy: 100, r, class: 'donut-track' })];
+  const arcs: SVGElement[] = [];
+  let picked: number | null = null;
   let offset = 0;
   for (const s of slices) {
     const len = (s.amount / total) * circ;
@@ -110,6 +112,17 @@ export function donut(slices: SplitSlice[], center: HTMLElement): HTMLElement {
       'stroke-dashoffset': -offset, transform: 'rotate(-90 100 100)',
     });
     (arc as SVGElement & ElementCSSInlineStyle).style.stroke = sliceColor(s);
+    if (onPick) {
+      const index = arcs.length;
+      arc.setAttribute('tabindex', '0');
+      arc.setAttribute('role', 'button');
+      arc.setAttribute('aria-label', s.title);
+      arc.classList.add('pickable');
+      const pick = () => { picked = picked === index ? null : index; arcs.forEach((a, k) => a.classList.toggle('dim', picked !== null && picked !== k)); onPick(picked); };
+      arc.addEventListener('click', pick);
+      arc.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
+    }
+    arcs.push(arc);
     parts.push(arc);
     offset += len;
   }
